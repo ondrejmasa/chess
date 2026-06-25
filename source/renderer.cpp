@@ -24,11 +24,13 @@ void Renderer::ClearPiecesTextures()
 void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t activeIdx, const BitBoard activeMoves, const float leftOffset, const float TopOffset, const float gridSize)
 {
 	x = leftOffset; y = TopOffset; size = gridSize;
+	// background
 	const float cellSize = size / 8.f;
 	SDL_FRect rect = { x, y, size, size };
 	SDL_SetRenderDrawColor(renderer, 242, 232, 231, 255);
 	SDL_RenderFillRect(renderer, &rect);
 
+	// dark squares
 	SDL_SetRenderDrawColor(renderer, 163, 82, 78, 255);
 	for (auto i = 0; i < 8; ++i) {
 		for (auto j = 1 - (i % 2); j < 8; j += 2) {
@@ -40,6 +42,7 @@ void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t 
 	for (auto i = 7; i >= 0; --i) {
 		for (auto j = 0; j < 8; ++j) {
 			auto idx = i * 8 + j;
+			// active moves
 			if (activeMoves >> idx & 1ULL)
 			{
 				float sz = cellSize * 0.75f;
@@ -48,6 +51,7 @@ void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t 
 				SDL_SetRenderDrawColor(renderer, 150, 150, 150, 100);
 				SDL_RenderFillRect(renderer, &rect);
 			}
+			// pieces
 			for (int pc = W_PAWN; pc <= B_KING; ++pc)
 			{
 				if ((board.pieceBB[pc] >> idx) & 1ULL)
