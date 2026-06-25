@@ -75,10 +75,12 @@ void App::Run()
 						}
 						else
 						{
-							if (mIsWhiteTurn == (mBoard.isOccupiedAtIdx(idx) and (not mBoard.isWhiteAtIdx(idx))))
+							SquareColor clr = mBoard.GetColorAtIdx(idx);
+							if (clr != EMPTY and mIsWhiteTurn == (clr == BLACK))
 							{
 								std::cout << "wrong color\n";
 								mActiveIdx = -1;
+								mActiveMoves = 0ULL;
 								continue;
 							}
 							mActiveIdx = idx;

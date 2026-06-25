@@ -1,10 +1,13 @@
 # pragma once
 #include <cstdint>
 #include <array>
+#include <iostream>
 
 typedef uint64_t BitBoard;
 
 enum PieceTypeAndColor { W_PAWN = 0, W_KNIGHT = 1, W_BISHOP = 2, W_ROOK = 3, W_QUEEN = 4, W_KING = 5, B_PAWN = 6, B_KNIGHT = 7, B_BISHOP = 8, B_ROOK = 9, B_QUEEN = 10, B_KING = 11};
+
+enum SquareColor {WHITE, BLACK, EMPTY};
 
 enum Squares {
     A1, B1, C1, D1, E1, F1, G1, H1,  // 0 - 7
@@ -20,8 +23,13 @@ enum Squares {
 class Board {
 private:
     std::array<BitBoard, 64> knightMoves;
+    std::array<BitBoard, 64> kingMoves;
 	void InitBoard();
     void InitKnightMoves();
+    void InitKingMoves();
+    const BitBoard getRookMoves(const int8_t idx) const;
+    const BitBoard getBishopMoves(const int8_t idx) const;
+    const BitBoard getPawnMoves(const int8_t idx) const;
     const BitBoard notAFile = 0xFEFEFEFEFEFEFEFEULL;
     const BitBoard notABFile = 0xFCFCFCFCFCFCFCFCULL;
     const BitBoard notHFile = 0x7F7F7F7F7F7F7F7FULL;
@@ -34,8 +42,8 @@ public:
     int GetPieceAtIdx(const int8_t idx);
     BitBoard GetActiveMoves(const int8_t idx);
     void Move(const int from, const int to);
-    const bool IsWhite(const int pc) const;
-    const bool isWhiteAtIdx(const int8_t idx) const;
+    const SquareColor GetColor(const int pc) const;
+    const SquareColor GetColorAtIdx(const int8_t idx) const;
     const bool isOccupiedAtIdx(const int8_t idx) const;
     Board();
     
