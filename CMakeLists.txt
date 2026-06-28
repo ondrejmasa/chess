@@ -6,7 +6,7 @@ if (POLICY CMP0141)
 endif()
 
 # === TRICK: Natvrdo nastavený vcpkg toolchain (vlož to přesně SEM) ===
-set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+# set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 
 project ("chess" CXX)
 
