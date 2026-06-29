@@ -5,8 +5,8 @@ void Board::InitBoard()
 	occupiedBB = 0ULL;
 	pieceBB.fill(0ULL);
 
-	for (int sq = A2; sq <= H2; ++sq) pieceBB[W_PAWN] |= (1ULL << sq);
-	for (int sq = A7; sq <= H7; ++sq) pieceBB[B_PAWN] |= (1ULL << sq);
+	// for (int sq = A2; sq <= H2; ++sq) pieceBB[W_PAWN] |= (1ULL << sq);
+	// for (int sq = A7; sq <= H7; ++sq) pieceBB[B_PAWN] |= (1ULL << sq);
 
 	pieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
 	pieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
@@ -132,7 +132,7 @@ const BitBoard Board::getBishopMoves(const int8_t idx) const
 
 const BitBoard Board::getPawnMoves(const int8_t idx) const
 {
-	BitBoard pos = 1ULL << idx;
+	const BitBoard pos = 1ULL << idx;
 	BitBoard moves = 0ULL;
 	auto r = idx / 8;
 	SquareColor clr = GetColorAtIdx(idx);
@@ -159,7 +159,35 @@ const BitBoard Board::getPawnMoves(const int8_t idx) const
 	return moves;
 }
 
-int Board::GetPieceAtIdx(const int8_t idx)
+const bool Board::canWhiteCastleRight() const
+{
+    if (whiteCastle.KingMoved or whiteCastle.RightRookMoved) return false;
+	if (((occupiedBB >> F1) & 1ULL) or ((occupiedBB >> G1) & 1ULL)) return false;
+	return true;
+}
+
+const bool Board::canWhiteCastleLeft() const
+{
+    if (whiteCastle.KingMoved or whiteCastle.LeftRookMoved) return false;
+	if (((occupiedBB >> B1) & 1ULL) or ((occupiedBB >> C1) & 1ULL) or ((occupiedBB >> D1) & 1ULL)) return false;
+	return true;
+}
+
+const bool Board::canBlackCastleRight() const
+{
+    if (blackCastle.KingMoved or blackCastle.RightRookMoved) return false;
+	if (((occupiedBB >> F8) & 1ULL) or ((occupiedBB >> G8) & 1ULL)) return false;
+	return true;
+}
+
+const bool Board::canBlackCastleLeft() const
+{
+    if (blackCastle.KingMoved or blackCastle.LeftRookMoved) return false;
+	if (((occupiedBB >> B8) & 1ULL) or ((occupiedBB >> C8) & 1ULL) or ((occupiedBB >> D8) & 1ULL)) return false;
+	return true;
+}
+
+const int Board::GetPieceAtIdx(const int8_t idx)
 {
 	for (int pc = W_PAWN; pc <= B_KING; ++pc)
 	{
@@ -171,11 +199,12 @@ int Board::GetPieceAtIdx(const int8_t idx)
 	return -1;
 }
 
-BitBoard Board::GetActiveMoves(const int8_t idx)
+const BitBoard Board::GetActiveMoves(const int8_t idx)
 {
-	int pc = GetPieceAtIdx(idx);
+	const int pc = GetPieceAtIdx(idx);
 	if (pc == -1)
 		return 0ULL;
+	BitBoard castle {0ULL};
 	switch (pc)
 	{
 		case B_KNIGHT:
@@ -183,9 +212,13 @@ BitBoard Board::GetActiveMoves(const int8_t idx)
 		case W_KNIGHT:
 			return knightMoves[idx] & ~ whiteBB;
 		case B_KING:
-			return kingMoves[idx] & ~blackBB;
+			castle = canBlackCastleLeft() ? (1ULL << C8) : 0ULL;
+			castle |= canBlackCastleRight() ? (1ULL << G8) : 0ULL;
+			return (kingMoves[idx] & ~blackBB) | castle;
 		case W_KING:
-			return kingMoves[idx] & ~whiteBB;
+			castle = canWhiteCastleLeft() ? (1ULL << C1) : 0ULL;
+			castle |= canWhiteCastleRight() ? (1ULL << G1) : 0ULL;		
+			return (kingMoves[idx] & ~whiteBB) | castle;
 		case W_ROOK:
 			return getRookMoves(idx) & ~whiteBB;
 		case B_ROOK:
@@ -202,22 +235,25 @@ BitBoard Board::GetActiveMoves(const int8_t idx)
 		case W_PAWN:
 			return getPawnMoves(idx);
 	}
+	return 0ULL;
 }
 
 void Board::Move(const int from, const int to)
 {
-	int pc = GetPieceAtIdx(from);
-	int pc2 = GetPieceAtIdx(to);
-	BitBoard toBB = 1ULL << to;
-	BitBoard fromBB = 1ULL << from;
-	BitBoard fromToBB = fromBB ^ toBB;
+	const int pc = GetPieceAtIdx(from);
+	const int pc2 = GetPieceAtIdx(to);
+	const BitBoard toBB = 1ULL << to;
+	const BitBoard fromBB = 1ULL << from;
+	const BitBoard fromToBB = fromBB ^ toBB;
+	// move pc
 	pieceBB[pc] ^= fromToBB;
-	SquareColor pcCol = GetColor(pc);
+	const SquareColor pcCol = GetColor(pc);
 	if (pcCol == WHITE)
 		whiteBB ^= fromToBB;
 	else
 		blackBB ^= fromToBB;
-	SquareColor pc2Col = GetColor(pc2);
+	// if "to" square is occupied by enemy, eliminate them
+	const SquareColor pc2Col = GetColor(pc2);
 	if (pc2Col != EMPTY and pcCol != pc2Col)
 	{
 		pieceBB[pc2] ^= toBB;
@@ -226,7 +262,50 @@ void Board::Move(const int from, const int to)
 		else
 			blackBB ^= toBB;
 	}
+
+	// check for castle moves
+	if (pc == W_KING)
+	{
+		BitBoard rm {0ULL};
+		if (to == G1)
+		{
+			rm = (1ULL << H1) | (1ULL << F1);
+			pieceBB[W_ROOK] ^= rm;
+		}
+		else if (to == C1)
+		{
+			rm = (1ULL << A1) | (1ULL << D1);
+			pieceBB[W_ROOK] ^= rm;
+		}
+		whiteBB ^= rm;
+	}
+	else if (pc == B_KING)
+	{
+		BitBoard rm {0ULL};
+		if (to == G8)
+		{
+			rm = (1ULL << H8) | (1ULL << F8);
+			pieceBB[B_ROOK] ^= rm;
+		}
+		else if (to == C8)
+		{
+			rm = (1ULL << A8) | (1ULL << D8);
+			pieceBB[B_ROOK] ^= rm;
+		}
+		blackBB ^= rm;		
+	}
+
 	occupiedBB = whiteBB | blackBB;
+
+	// update castle info
+	switch(pc){
+		case W_KING: whiteCastle.KingMoved = true; break;
+		case B_KING: blackCastle.KingMoved = true; break;
+		case W_ROOK:
+			from == A1 ? whiteCastle.LeftRookMoved = true : whiteCastle.RightRookMoved = true; break;
+		case B_ROOK:
+			from == A8 ? blackCastle.LeftRookMoved = true : blackCastle.RightRookMoved = true; break;
+	}
 }
 
 const SquareColor Board::GetColor(const int pc) const

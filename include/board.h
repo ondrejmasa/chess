@@ -20,8 +20,22 @@ enum Squares {
     A8, B8, C8, D8, E8, F8, G8, H8   // 56 - 63
 };
 
+struct Castle {
+    bool KingMoved;
+    bool LeftRookMoved;
+    bool RightRookMoved;
+    const bool CanCastleRight() const {return !RightRookMoved and !KingMoved;};
+    const bool CanCastleLeft() const {return !LeftRookMoved and !KingMoved;};
+};
+
 class Board {
 private:
+    const BitBoard notAFile = 0xFEFEFEFEFEFEFEFEULL;
+    const BitBoard notABFile = 0xFCFCFCFCFCFCFCFCULL;
+    const BitBoard notHFile = 0x7F7F7F7F7F7F7F7FULL;
+    const BitBoard notGHFile = 0x3F3F3F3F3F3F3F3FULL;
+    Castle whiteCastle;
+    Castle blackCastle;
     std::array<BitBoard, 64> knightMoves;
     std::array<BitBoard, 64> kingMoves;
 	void InitBoard();
@@ -30,21 +44,20 @@ private:
     const BitBoard getRookMoves(const int8_t idx) const;
     const BitBoard getBishopMoves(const int8_t idx) const;
     const BitBoard getPawnMoves(const int8_t idx) const;
-    const BitBoard notAFile = 0xFEFEFEFEFEFEFEFEULL;
-    const BitBoard notABFile = 0xFCFCFCFCFCFCFCFCULL;
-    const BitBoard notHFile = 0x7F7F7F7F7F7F7F7FULL;
-    const BitBoard notGHFile = 0x3F3F3F3F3F3F3F3FULL;
+    const bool canWhiteCastleRight() const;
+    const bool canWhiteCastleLeft() const;
+    const bool canBlackCastleRight() const;
+    const bool canBlackCastleLeft() const; 
 public:
     std::array<BitBoard, 12> pieceBB;
     BitBoard whiteBB;
     BitBoard blackBB;
     BitBoard occupiedBB;
-    int GetPieceAtIdx(const int8_t idx);
-    BitBoard GetActiveMoves(const int8_t idx);
+    const int GetPieceAtIdx(const int8_t idx);
+    const BitBoard GetActiveMoves(const int8_t idx);
     void Move(const int from, const int to);
     const SquareColor GetColor(const int pc) const;
     const SquareColor GetColorAtIdx(const int8_t idx) const;
     const bool isOccupiedAtIdx(const int8_t idx) const;
     Board();
-    
 };
