@@ -36,8 +36,10 @@ private:
     const BitBoard NotGHFile = 0x3F3F3F3F3F3F3F3FULL;
     BitBoard WhiteEnPassant = 0ULL;
     BitBoard BlackEnPassant = 0ULL;
-    BitBoard WhiteMoves;
-    BitBoard BlackMoves;
+    BitBoard WhiteCheckers = 0ULL;
+    BitBoard BlackCheckers = 0ULL;
+    BitBoard WhiteAttacks;
+    BitBoard BlackAttacks;
     Castle WhiteCastle;
     Castle BlackCastle;
     std::array<BitBoard, 64> KnightMoves;
@@ -48,8 +50,12 @@ private:
     BitBoard GetRookMoves(const int8_t idx) const;
     BitBoard GetBishopMoves(const int8_t idx) const;
     BitBoard GetPawnMoves(const int8_t idx) const;
-    BitBoard GetAllWhiteMoves() const;
-    BitBoard GetAllBlackMoves() const;
+    BitBoard GetPawnAttacks(const int8_t idx) const;
+    BitBoard GetAllWhiteAttacks();
+    BitBoard GetAllBlackAttacks();
+    BitBoard GetWhiteCheckers() const;
+    BitBoard GetBlackCheckers() const;
+    BitBoard GetActiveAttacks(const int8_t idx) const;
     bool CanWhiteCastleRight() const;
     bool CanWhiteCastleLeft() const;
     bool CanBlackCastleRight() const;

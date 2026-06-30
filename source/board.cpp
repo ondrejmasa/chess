@@ -22,6 +22,9 @@ void Board::InitBoard()
 	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
 	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
 	OccupiedBB = WhiteBB | BlackBB;
+
+	WhiteAttacks = GetAllWhiteAttacks();
+	BlackAttacks = GetAllBlackAttacks();
 }
 
 void Board::InitKnightMoves()
@@ -167,26 +170,108 @@ BitBoard Board::GetPawnMoves(const int8_t idx) const
 	return moves;
 }
 
-BitBoard Board::GetAllWhiteMoves() const
+BitBoard Board::GetPawnAttacks(const int8_t idx) const
 {
-    BitBoard moves {0ULL};
-	for (uint8_t i = 0; i < 64; i++)
+	const BitBoard pos = 1ULL << idx;
+	BitBoard moves = 0ULL;
+	SquareColor clr = GetColorAtIdx(idx);
+	if (clr == WHITE)
 	{
-		if ((WhiteBB >> i) & 1ULL)
-			moves |= GetActiveMoves(i);	
+		// jump
+		if (((pos << 7) & NotHFile)) moves |= (pos << 7);
+		if (((pos << 9) & NotAFile)) moves |= (pos << 9);
+	}
+	else
+	{
+		if (((pos >> 7) & NotAFile)) moves |= (pos >> 7);
+		if (((pos >> 9) & NotHFile)) moves |= (pos >> 9);
 	}
 	return moves;
 }
 
-BitBoard Board::GetAllBlackMoves() const
+BitBoard Board::GetAllWhiteAttacks() 
 {
-    BitBoard moves {0ULL};
-	for (uint8_t i = 0; i < 64; i++)
-	{
-		if ((BlackBB >> i) & 1ULL)
-			moves |= GetActiveMoves(i);	
+	BitBoard moves {0ULL};
+	BitBoard bb = WhiteBB; 
+	BlackBB ^= PieceBB[B_KING];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb);
+		moves |= GetActiveAttacks(idx);
+		bb &= (bb - 1);
 	}
+	BlackBB ^= PieceBB[B_KING];
 	return moves;
+}
+
+BitBoard Board::GetAllBlackAttacks()
+{
+	BitBoard moves {0ULL};
+	BitBoard bb = BlackBB; 
+	WhiteBB ^= PieceBB[W_KING];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb);
+		moves |= GetActiveAttacks(idx);
+		bb &= (bb - 1);
+	}
+	WhiteBB ^= PieceBB[W_KING];
+	return moves;
+}
+
+BitBoard Board::GetWhiteCheckers() const
+{
+	BitBoard checkers {0ULL};
+	BitBoard bb = WhiteBB; 
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb);
+		const BitBoard moves = GetActiveMoves(idx);
+		if (moves & PieceBB[B_KING])
+		checkers |= (1ULL << idx);
+		bb &= (bb - 1);
+	}
+	return checkers;
+}
+
+BitBoard Board::GetBlackCheckers() const
+{
+	BitBoard checkers {0ULL};
+	BitBoard bb = BlackBB; 
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb);
+		const BitBoard moves = GetActiveMoves(idx);
+		if (moves & PieceBB[W_KING])
+		checkers |= (1ULL << idx);
+		bb &= (bb - 1);
+	}
+	return checkers;
+}
+
+BitBoard Board::GetActiveAttacks(const int8_t idx) const
+{
+	const int pc = GetPieceAtIdx(idx);
+	if (pc == -1)
+		return 0ULL;
+
+	switch (pc)
+	{
+		case B_KNIGHT:
+		case W_KNIGHT:
+			return KnightMoves[idx];
+		case B_KING:
+		case W_KING:
+			return (KingMoves[idx]);
+		case W_ROOK:
+		case B_ROOK:
+			return GetRookMoves(idx);
+		case W_BISHOP:
+		case B_BISHOP:
+			return GetBishopMoves(idx);
+		case W_QUEEN:
+		case B_QUEEN:
+			return (GetRookMoves(idx) | GetBishopMoves(idx));
+		case B_PAWN:
+		case W_PAWN:
+			return GetPawnAttacks(idx);
+	}
 }
 
 bool Board::CanWhiteCastleRight() const
@@ -234,37 +319,62 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 	const int pc = GetPieceAtIdx(idx);
 	if (pc == -1)
 		return 0ULL;
+	
+	BitBoard safeMaskWhite {-1ULL};
+	BitBoard safeMaskBlack {-1ULL};
+	const int numWhiteCheckers = std::popcount(WhiteCheckers);
+	const int numBlackCheckers = std::popcount(BlackCheckers);
+	if (numWhiteCheckers == 1)
+	{
+
+	}
+	else if (numWhiteCheckers > 1)
+		safeMaskBlack = 0ULL;
+
+	if (numBlackCheckers == 1)
+	{
+
+	}
+	else if (numBlackCheckers > 1)
+		safeMaskWhite = 0ULL;	
+	
 	BitBoard castle {0ULL};
 	switch (pc)
 	{
 		case B_KNIGHT:
-			return KnightMoves[idx] & ~ BlackBB;
+			return KnightMoves[idx] & ~ BlackBB & safeMaskBlack;
 		case W_KNIGHT:
-			return KnightMoves[idx] & ~ WhiteBB;
+			return KnightMoves[idx] & ~ WhiteBB & safeMaskWhite;
 		case B_KING:
 			castle = CanBlackCastleLeft() ? (1ULL << C8) : 0ULL;
 			castle |= CanBlackCastleRight() ? (1ULL << G8) : 0ULL;
-			return (KingMoves[idx] & ~BlackBB) | castle;
+			return (KingMoves[idx] & ~BlackBB & ~ WhiteAttacks) | castle;
 		case W_KING:
 			castle = CanWhiteCastleLeft() ? (1ULL << C1) : 0ULL;
 			castle |= CanWhiteCastleRight() ? (1ULL << G1) : 0ULL;		
-			return (KingMoves[idx] & ~WhiteBB) | castle;
+			return (KingMoves[idx] & ~WhiteBB & ~ BlackAttacks) | castle;
 		case W_ROOK:
-			return GetRookMoves(idx) & ~WhiteBB;
+			return GetRookMoves(idx) & ~WhiteBB & safeMaskWhite;
 		case B_ROOK:
-			return GetRookMoves(idx) & ~BlackBB;
+			return GetRookMoves(idx) & ~BlackBB & safeMaskBlack;
 		case W_BISHOP:
-			return GetBishopMoves(idx) & ~WhiteBB;
+			return GetBishopMoves(idx) & ~WhiteBB & safeMaskWhite;
 		case B_BISHOP:
-			return GetBishopMoves(idx) & ~BlackBB;
+			return GetBishopMoves(idx) & ~BlackBB & safeMaskBlack;
 		case W_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB & safeMaskWhite;
 		case B_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB & safeMaskBlack;
 		case B_PAWN:
+			return GetPawnMoves(idx) & safeMaskBlack;
 		case W_PAWN:
-			return GetPawnMoves(idx);
+			return GetPawnMoves(idx) & safeMaskWhite;
 	}
+
+	// jsem v checku -> musím pohnout tak, abych se z něj dostal
+
+	// nejsem v checku -> musím pohnout tak, abych se do něj nedostal
+
 	return 0ULL;
 }
 
@@ -368,19 +478,17 @@ void Board::Move(const int from, const int to)
 		else if (pc == B_PAWN) BlackEnPassant = 1ULL << (to+8);
 	}
 
+	WhiteAttacks = GetAllWhiteAttacks();
+	BlackAttacks = GetAllBlackAttacks();
 
-	if (pcCol == WHITE)
-	{
-		const BitBoard whiteMoves = GetAllWhiteMoves();
-		if (PieceBB[B_KING] & whiteMoves)
-			std::cout << "White check \n";
-	}
-	else
-	{
-		const BitBoard blackMoves = GetAllBlackMoves();
-		if (PieceBB[W_KING] & blackMoves)
-			std::cout << "Black check \n";
-	}
+	WhiteCheckers = GetWhiteCheckers();
+	BlackCheckers = GetBlackCheckers();
+
+	std::cout << "white checkers: \n";
+	printBitboard(WhiteCheckers);
+
+	std::cout << "black checkers: \n";
+	printBitboard(BlackCheckers);
 }
 
 SquareColor Board::GetColor(const int pc) const

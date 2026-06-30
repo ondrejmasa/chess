@@ -4,7 +4,7 @@
 
 typedef uint64_t BitBoard;
 
-inline void printBitboard(const BitBoard bitBoard)
+inline void printBitboard(BitBoard bitBoard)
 {
     for (auto i = 7; i >= 0; --i)
     {
