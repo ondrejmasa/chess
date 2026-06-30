@@ -23,10 +23,10 @@ void Renderer::ClearPiecesTextures()
 
 void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t activeIdx, const BitBoard activeMoves, const float leftOffset, const float TopOffset, const float gridSize)
 {
-	x = leftOffset; y = TopOffset; size = gridSize;
+	X = leftOffset; Y = TopOffset; Size = gridSize;
 	// background
-	const float cellSize = size / 8.f;
-	SDL_FRect rect = { x, y, size, size };
+	const float cellSize = Size / 8.f;
+	SDL_FRect rect = { X, Y, Size, Size };
 	SDL_SetRenderDrawColor(renderer, 242, 232, 231, 255);
 	SDL_RenderFillRect(renderer, &rect);
 
@@ -34,7 +34,7 @@ void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t 
 	SDL_SetRenderDrawColor(renderer, 163, 82, 78, 255);
 	for (auto i = 0; i < 8; ++i) {
 		for (auto j = 1 - (i % 2); j < 8; j += 2) {
-			rect = { x + j * cellSize, y + i * cellSize, cellSize, cellSize };
+			rect = { X + j * cellSize, Y + i * cellSize, cellSize, cellSize };
 			SDL_RenderFillRect(renderer, &rect);
 		}
 	}
@@ -47,16 +47,16 @@ void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t 
 			{
 				float sz = cellSize * 0.75f;
 				float o = (cellSize - sz) / 2;
-				rect = { x + j * cellSize + o, y + (7 - i) * cellSize + o, sz, sz };
+				rect = { X + j * cellSize + o, Y + (7 - i) * cellSize + o, sz, sz };
 				SDL_SetRenderDrawColor(renderer, 150, 150, 150, 100);
 				SDL_RenderFillRect(renderer, &rect);
 			}
 			// pieces
 			for (int pc = W_PAWN; pc <= B_KING; ++pc)
 			{
-				if ((board.pieceBB[pc] >> idx) & 1ULL)
+				if ((board.PieceBB[pc] >> idx) & 1ULL)
 				{
-					rect = { x + j * cellSize, y + (7-i) * cellSize, cellSize, cellSize };
+					rect = { X + j * cellSize, Y + (7-i) * cellSize, cellSize, cellSize };
 					if (activeIdx == idx)
 					{
 						SDL_SetRenderDrawColor(renderer, 163, 120, 71, 255);
@@ -89,13 +89,13 @@ void Renderer::loadAllPieces(SDL_Renderer* renderer)
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
 {
-	float boardX = (posX - x);
-	float boardY = (posY - y);
-	if (boardX >= size || boardX < 0 || boardY >= size || boardY < 0)
+	float boardX = (posX - X);
+	float boardY = (posY - Y);
+	if (boardX >= Size || boardX < 0 || boardY >= Size || boardY < 0)
 	{
 		return -1;
 	}
-	float cellSize = size / 8.f;
+	float cellSize = Size / 8.f;
 	int8_t row = boardY / cellSize;
 	int8_t col = boardX / cellSize;
 	int8_t idx = (7-row) * 8 + col;

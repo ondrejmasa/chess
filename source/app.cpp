@@ -91,7 +91,7 @@ void App::Run()
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
-				HandleLeftClick(event);
+					HandleLeftClick(event);
 				}
 			}
 		}

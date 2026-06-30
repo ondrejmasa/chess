@@ -10,9 +10,9 @@
 
 class Renderer {
 private:
-	float x;
-	float y;
-	float size;
+	float X;
+	float Y;
+	float Size;
 	std::array<SDL_Texture*, 12> pieceTextures;
 	SDL_Texture* LoadTexture(const std::string& path, SDL_Renderer* renderer);
 	void ClearPiecesTextures();

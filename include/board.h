@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <array>
 #include <iostream>
+#include "global.h"
 
-typedef uint64_t BitBoard;
 
 enum PieceTypeAndColor { W_PAWN = 0, W_KNIGHT = 1, W_BISHOP = 2, W_ROOK = 3, W_QUEEN = 4, W_KING = 5, B_PAWN = 6, B_KNIGHT = 7, B_BISHOP = 8, B_ROOK = 9, B_QUEEN = 10, B_KING = 11};
 
@@ -30,34 +30,40 @@ struct Castle {
 
 class Board {
 private:
-    const BitBoard notAFile = 0xFEFEFEFEFEFEFEFEULL;
-    const BitBoard notABFile = 0xFCFCFCFCFCFCFCFCULL;
-    const BitBoard notHFile = 0x7F7F7F7F7F7F7F7FULL;
-    const BitBoard notGHFile = 0x3F3F3F3F3F3F3F3FULL;
-    Castle whiteCastle;
-    Castle blackCastle;
-    std::array<BitBoard, 64> knightMoves;
-    std::array<BitBoard, 64> kingMoves;
+    const BitBoard NotAFile = 0xFEFEFEFEFEFEFEFEULL;
+    const BitBoard NotABFile = 0xFCFCFCFCFCFCFCFCULL;
+    const BitBoard NotHFile = 0x7F7F7F7F7F7F7F7FULL;
+    const BitBoard NotGHFile = 0x3F3F3F3F3F3F3F3FULL;
+    BitBoard WhiteEnPassant = 0ULL;
+    BitBoard BlackEnPassant = 0ULL;
+    BitBoard WhiteMoves;
+    BitBoard BlackMoves;
+    Castle WhiteCastle;
+    Castle BlackCastle;
+    std::array<BitBoard, 64> KnightMoves;
+    std::array<BitBoard, 64> KingMoves;
 	void InitBoard();
     void InitKnightMoves();
     void InitKingMoves();
-    const BitBoard getRookMoves(const int8_t idx) const;
-    const BitBoard getBishopMoves(const int8_t idx) const;
-    const BitBoard getPawnMoves(const int8_t idx) const;
-    const bool canWhiteCastleRight() const;
-    const bool canWhiteCastleLeft() const;
-    const bool canBlackCastleRight() const;
-    const bool canBlackCastleLeft() const; 
+    BitBoard GetRookMoves(const int8_t idx) const;
+    BitBoard GetBishopMoves(const int8_t idx) const;
+    BitBoard GetPawnMoves(const int8_t idx) const;
+    BitBoard GetAllWhiteMoves() const;
+    BitBoard GetAllBlackMoves() const;
+    bool CanWhiteCastleRight() const;
+    bool CanWhiteCastleLeft() const;
+    bool CanBlackCastleRight() const;
+    bool CanBlackCastleLeft() const; 
 public:
-    std::array<BitBoard, 12> pieceBB;
-    BitBoard whiteBB;
-    BitBoard blackBB;
-    BitBoard occupiedBB;
-    const int GetPieceAtIdx(const int8_t idx);
-    const BitBoard GetActiveMoves(const int8_t idx);
+    std::array<BitBoard, 12> PieceBB;
+    BitBoard WhiteBB;
+    BitBoard BlackBB;
+    BitBoard OccupiedBB;
+    int GetPieceAtIdx(const int8_t idx) const;
+    BitBoard GetActiveMoves(const int8_t idx) const;
     void Move(const int from, const int to);
-    const SquareColor GetColor(const int pc) const;
-    const SquareColor GetColorAtIdx(const int8_t idx) const;
-    const bool isOccupiedAtIdx(const int8_t idx) const;
+    SquareColor GetColor(const int pc) const;
+    SquareColor GetColorAtIdx(const int8_t idx) const;
+    bool IsOccupiedAtIdx(const int8_t idx) const;
     Board();
 };
