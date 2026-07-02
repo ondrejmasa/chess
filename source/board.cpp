@@ -34,7 +34,7 @@ void Board::InitRayFromTo()
 			{
 				step = 8;				
 			}
-			else if (std::abs(r1-c1) == std::abs(r2-c2)) // same diag
+			else if (std::abs(r1-r2) == std::abs(c1-c2)) // same diag
 			{
 				step = c1 < c2 ? 9 : 7;
 			}
@@ -451,6 +451,20 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 		int checkerIdx = std::countr_zero(WhiteCheckers);
 		int kingIdx = std::countr_zero(PieceBB[B_KING]);
 		safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
+		std::cout << "safemask: \n";
+		printBitboard(safeMaskBlack);
+		std::cout << "\n";
+		std::cout << "GetActiveAttacks(checkerIdx): \n";
+		printBitboard(GetActiveAttacks(checkerIdx));
+		std::cout << "\n";
+		std::cout << "WhiteCheckers: \n";
+		printBitboard(WhiteCheckers);
+		std::cout << "\n";
+		std::cout << "RayFromTo[checkerIdx][kingIdx]: \n";
+		printBitboard(RayFromTo[checkerIdx][kingIdx]);
+		std::cout << "\n";
+		std::cout << "\n";
+		std::cout << "\n";
 	}
 	else if (numWhiteCheckers > 1)
 		safeMaskBlack = 0ULL;
@@ -686,5 +700,5 @@ Board::Board()
 	InitKingMoves();
 	InitRayFromTo();
 
-	printBitboard(RayFromTo[32][32]);
+	printBitboard(RayFromTo[60][53]);
 }
