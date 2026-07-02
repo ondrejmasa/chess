@@ -42,7 +42,7 @@ void App::Update()
 
 void App::Render()
 {
-	mRenderer.Render(mBoard, mActiveIdx, mActiveMoves);
+	mRenderer.Render(mBoard, mActiveIdx, mActiveMoves, mGameState);
 }
 
 App::App()
