@@ -4,6 +4,8 @@
 
 typedef uint64_t BitBoard;
 
+enum GameState { GAME, W_WIN, B_WIN, STALEMATE, W_PROMOTE, B_PROMOTE };
+
 inline void printBitboard(BitBoard bitBoard)
 {
     for (auto i = 7; i >= 0; --i)

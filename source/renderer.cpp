@@ -21,21 +21,46 @@ void Renderer::ClearPiecesTextures()
 	pieceTextures.fill(nullptr);
 }
 
-void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t activeIdx, const BitBoard activeMoves, const float leftOffset, const float TopOffset, const float gridSize)
+void Renderer::RenderWinState(SDL_Renderer* renderer, const bool IsWinnerWhite)
 {
-	X = leftOffset; Y = TopOffset; Size = gridSize;
+
+}
+
+void Renderer::InitTTF()
+{
+	pTextEngine = TTF_CreateRendererTextEngine(pSDLRenderer);
+}
+
+void Renderer::InitSDL()
+{
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_CreateWindowAndRenderer("", SCREEN_WIDTH, SCREEN_HEIGHT, 0, &pWindow, &pSDLRenderer);
+	SDL_SetRenderVSync(pSDLRenderer, 1);
+}
+
+void Renderer::Render(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves, const GameState gameState)
+{
+	RenderBoard(board, activeIdx, activeMoves);	
+}
+
+void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves)
+{
+	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
+	SDL_RenderClear(pSDLRenderer);
+
 	// background
-	const float cellSize = Size / 8.f;
-	SDL_FRect rect = { X, Y, Size, Size };
-	SDL_SetRenderDrawColor(renderer, 242, 232, 231, 255);
-	SDL_RenderFillRect(renderer, &rect);
+	const float cellSize = BoardSize / 8.f;
+	SDL_FRect rect = { BoardX, BoardY, BoardSize, BoardSize };
+	SDL_SetRenderDrawColor(pSDLRenderer, 242, 232, 231, 255);
+	SDL_RenderFillRect(pSDLRenderer, &rect);
 
 	// dark squares
-	SDL_SetRenderDrawColor(renderer, 163, 82, 78, 255);
+	SDL_SetRenderDrawColor(pSDLRenderer, 163, 82, 78, 255);
 	for (auto i = 0; i < 8; ++i) {
 		for (auto j = 1 - (i % 2); j < 8; j += 2) {
-			rect = { X + j * cellSize, Y + i * cellSize, cellSize, cellSize };
-			SDL_RenderFillRect(renderer, &rect);
+			rect = { BoardX + j * cellSize, BoardY + i * cellSize, cellSize, cellSize };
+			SDL_RenderFillRect(pSDLRenderer, &rect);
 		}
 	}
 
@@ -47,62 +72,87 @@ void Renderer::Render(SDL_Renderer* renderer, const Board& board, const uint8_t 
 			{
 				float sz = cellSize * 0.75f;
 				float o = (cellSize - sz) / 2;
-				rect = { X + j * cellSize + o, Y + (7 - i) * cellSize + o, sz, sz };
-				SDL_SetRenderDrawColor(renderer, 150, 150, 150, 100);
-				SDL_RenderFillRect(renderer, &rect);
+				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				SDL_SetRenderDrawColor(pSDLRenderer, 150, 150, 150, 100);
+				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
 			// pieces
 			for (int pc = W_PAWN; pc <= B_KING; ++pc)
 			{
 				if ((board.PieceBB[pc] >> idx) & 1ULL)
 				{
-					rect = { X + j * cellSize, Y + (7-i) * cellSize, cellSize, cellSize };
+					rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
 					if (activeIdx == idx)
 					{
-						SDL_SetRenderDrawColor(renderer, 163, 120, 71, 255);
-						SDL_RenderFillRect(renderer, &rect);
+						SDL_SetRenderDrawColor(pSDLRenderer, 163, 120, 71, 255);
+						SDL_RenderFillRect(pSDLRenderer, &rect);
 					}
-					SDL_RenderTexture(renderer, pieceTextures[pc], nullptr, &rect);
+					SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &rect);
 					break;
 				}
 			}
 		}
 	}
+
+	SDL_RenderPresent(pSDLRenderer);
 }
 
-void Renderer::loadAllPieces(SDL_Renderer* renderer)
+void Renderer::loadAllPieces()
 {
-	pieceTextures[W_PAWN] = LoadTexture("resources/w-pawn.png", renderer);
-	pieceTextures[W_KNIGHT] = LoadTexture("resources/w-knight.png", renderer);
-	pieceTextures[W_BISHOP] = LoadTexture("resources/w-bishop.png", renderer);
-	pieceTextures[W_ROOK] = LoadTexture("resources/w-rook.png", renderer);
-	pieceTextures[W_QUEEN] = LoadTexture("resources/w-queen.png", renderer);
-	pieceTextures[W_KING] = LoadTexture("resources/w-king.png", renderer);
+	pieceTextures[W_PAWN] = LoadTexture("resources/w-pawn.png", pSDLRenderer);
+	pieceTextures[W_KNIGHT] = LoadTexture("resources/w-knight.png", pSDLRenderer);
+	pieceTextures[W_BISHOP] = LoadTexture("resources/w-bishop.png", pSDLRenderer);
+	pieceTextures[W_ROOK] = LoadTexture("resources/w-rook.png", pSDLRenderer);
+	pieceTextures[W_QUEEN] = LoadTexture("resources/w-queen.png", pSDLRenderer);
+	pieceTextures[W_KING] = LoadTexture("resources/w-king.png", pSDLRenderer);
 
-	pieceTextures[B_PAWN] = LoadTexture("resources/b-pawn.png", renderer);
-	pieceTextures[B_KNIGHT] = LoadTexture("resources/b-knight.png", renderer);
-	pieceTextures[B_BISHOP] = LoadTexture("resources/b-bishop.png", renderer);
-	pieceTextures[B_ROOK] = LoadTexture("resources/b-rook.png", renderer);
-	pieceTextures[B_QUEEN] = LoadTexture("resources/b-queen.png", renderer);
-	pieceTextures[B_KING] = LoadTexture("resources/b-king.png", renderer);
+	pieceTextures[B_PAWN] = LoadTexture("resources/b-pawn.png", pSDLRenderer);
+	pieceTextures[B_KNIGHT] = LoadTexture("resources/b-knight.png", pSDLRenderer);
+	pieceTextures[B_BISHOP] = LoadTexture("resources/b-bishop.png", pSDLRenderer);
+	pieceTextures[B_ROOK] = LoadTexture("resources/b-rook.png", pSDLRenderer);
+	pieceTextures[B_QUEEN] = LoadTexture("resources/b-queen.png", pSDLRenderer);
+	pieceTextures[B_KING] = LoadTexture("resources/b-king.png", pSDLRenderer);
+}
+
+void Renderer::UpdateFPS()
+{
+	if (mFpsCounter.Update())
+	{
+		float fps = mFpsCounter.GetFps();
+		SDL_SetWindowTitle(pWindow, ("FPS: " + std::to_string(fps)).c_str());
+	}
 }
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
 {
-	float boardX = (posX - X);
-	float boardY = (posY - Y);
-	if (boardX >= Size || boardX < 0 || boardY >= Size || boardY < 0)
+	float boardX = (posX - BoardX);
+	float boardY = (posY - BoardY);
+	if (boardX >= BoardSize || boardX < 0 || boardY >= BoardSize || boardY < 0)
 	{
 		return -1;
 	}
-	float cellSize = Size / 8.f;
+	float cellSize = BoardSize / 8.f;
 	int8_t row = boardY / cellSize;
 	int8_t col = boardX / cellSize;
 	int8_t idx = (7-row) * 8 + col;
 	return idx;
 }
 
+Renderer::Renderer()
+{
+	InitSDL();
+	InitTTF();
+	loadAllPieces();
+}
+
 Renderer::~Renderer()
 {
 	ClearPiecesTextures();
+	// TTF_DestroyText(textHodiny);
+	// TTF_DestroyFont(font);
+	TTF_DestroySurfaceTextEngine(pTextEngine);
+	TTF_Quit();
+	SDL_DestroyRenderer(pSDLRenderer);
+	SDL_DestroyWindow(pWindow);
+	SDL_Quit();
 }

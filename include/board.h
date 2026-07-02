@@ -28,6 +28,12 @@ struct Castle {
     const bool CanCastleLeft() const {return !LeftRookMoved and !KingMoved;};
 };
 
+struct MoveData {
+    int Pc;
+    uint8_t From;
+    uint8_t To;
+};
+
 class Board {
 private:
     const BitBoard NotAFile = 0xFEFEFEFEFEFEFEFEULL;
@@ -40,10 +46,15 @@ private:
     BitBoard BlackCheckers = 0ULL;
     BitBoard WhiteAttacks;
     BitBoard BlackAttacks;
+    BitBoard WhitePins;
+    BitBoard BlackPins;
     Castle WhiteCastle;
     Castle BlackCastle;
     std::array<BitBoard, 64> KnightMoves;
     std::array<BitBoard, 64> KingMoves;
+    std::array<std::array<BitBoard, 64>, 64> RayFromTo;
+    MoveData LastMove;
+    void InitRayFromTo();
 	void InitBoard();
     void InitKnightMoves();
     void InitKingMoves();
@@ -56,6 +67,10 @@ private:
     BitBoard GetWhiteCheckers() const;
     BitBoard GetBlackCheckers() const;
     BitBoard GetActiveAttacks(const int8_t idx) const;
+    BitBoard GetWhitePins() const;
+    BitBoard GetBlackPins() const;
+    BitBoard GetAllWhiteMoves() const;
+    BitBoard GetAllBlackMoves() const;
     bool CanWhiteCastleRight() const;
     bool CanWhiteCastleLeft() const;
     bool CanBlackCastleRight() const;
@@ -67,7 +82,8 @@ public:
     BitBoard OccupiedBB;
     int GetPieceAtIdx(const int8_t idx) const;
     BitBoard GetActiveMoves(const int8_t idx) const;
-    void Move(const int from, const int to);
+    void Move(const uint8_t from, const uint8_t to);
+    GameState UpdateAfterMove();
     SquareColor GetColor(const int pc) const;
     SquareColor GetColorAtIdx(const int8_t idx) const;
     bool IsOccupiedAtIdx(const int8_t idx) const;

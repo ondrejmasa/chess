@@ -13,6 +13,7 @@ project ("chess" CXX)
 # Odsud dál pokračuje tvůj kód...
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
+find_package(SDL3_ttf REQUIRED)
 
 # 2. Definice tvého spustitelného programu
 add_executable (chess 
@@ -28,6 +29,7 @@ add_executable (chess
 target_link_libraries(chess PRIVATE 
     SDL3::SDL3
     SDL3_image::SDL3_image
+    SDL3_ttf::SDL3_ttf
 )
 
 # 4. Include adresář pro tvé vlastní hlavičkové soubory
