@@ -26,6 +26,11 @@ struct Castle {
     bool RightRookMoved;
     const bool CanCastleRight() const {return !RightRookMoved and !KingMoved;};
     const bool CanCastleLeft() const {return !LeftRookMoved and !KingMoved;};
+    void Restart() {
+        KingMoved = false;
+        LeftRookMoved = false;
+        RightRookMoved = false;
+    }
 };
 
 struct MoveData {
@@ -90,5 +95,6 @@ public:
     bool IsOccupiedAtIdx(const int8_t idx) const;
     const MoveData& GetLastMove() const; 
     void PromotePawn(const PieceTypeAndColor toPc);
+    void Restart();
     Board();
 };

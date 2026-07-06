@@ -18,6 +18,7 @@ private:
 	GameState mGameState = GAME;
 	bool mIsWhiteTurn = true;
 	void HandleLeftClick(const SDL_Event& event);
+	void Restart();
 	void Update();
 	void Render();
 public:

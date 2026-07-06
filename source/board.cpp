@@ -375,7 +375,7 @@ BitBoard Board::GetAllWhiteMoves() const
 	BitBoard bb = WhiteBB; 
 	while (bb > 0) {
 		const int idx = std::countr_zero(bb);
-		moves |= GetActiveAttacks(idx);
+		moves |= GetActiveMoves(idx);
 		bb &= (bb - 1);
 	}
 	return moves;
@@ -451,20 +451,6 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 		int checkerIdx = std::countr_zero(WhiteCheckers);
 		int kingIdx = std::countr_zero(PieceBB[B_KING]);
 		safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
-		std::cout << "safemask: \n";
-		printBitboard(safeMaskBlack);
-		std::cout << "\n";
-		std::cout << "GetActiveAttacks(checkerIdx): \n";
-		printBitboard(GetActiveAttacks(checkerIdx));
-		std::cout << "\n";
-		std::cout << "WhiteCheckers: \n";
-		printBitboard(WhiteCheckers);
-		std::cout << "\n";
-		std::cout << "RayFromTo[checkerIdx][kingIdx]: \n";
-		printBitboard(RayFromTo[checkerIdx][kingIdx]);
-		std::cout << "\n";
-		std::cout << "\n";
-		std::cout << "\n";
 	}
 	else if (numWhiteCheckers > 1)
 		safeMaskBlack = 0ULL;
@@ -716,12 +702,25 @@ void Board::PromotePawn(const PieceTypeAndColor toPc)
 	PieceBB[toPc] ^= pcBB;
 }
 
+void Board::Restart()
+{
+    WhiteEnPassant = 0ULL;
+    BlackEnPassant = 0ULL;
+    WhiteCheckers = 0ULL;
+    BlackCheckers = 0ULL;
+    WhiteAttacks = 0ULL;
+    BlackAttacks = 0ULL;
+    WhitePins = 0ULL;
+    BlackPins = 0ULL;
+    WhiteCastle.Restart();
+    BlackCastle.Restart();
+	InitBoard();
+}
+
 Board::Board()
 {
 	InitBoard();
 	InitKnightMoves();
 	InitKingMoves();
 	InitRayFromTo();
-
-	printBitboard(RayFromTo[60][53]);
 }

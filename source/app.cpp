@@ -32,7 +32,7 @@ void App::HandleLeftClick(const SDL_Event &event)
 				}
 			}
 			break;
-		};
+		}
 
 		case W_PROMOTE:
 		case B_PROMOTE:
@@ -44,9 +44,22 @@ void App::HandleLeftClick(const SDL_Event &event)
 				mGameState = GAME;
 			}
 			break;
-		};
-			
+		}
+
+		case W_WIN:
+		case B_WIN:
+			Restart();
+			break;
 	}
+}
+
+void App::Restart()
+{
+	mActiveIdx = -1;
+	mActiveMoves = 0ULL;
+	mGameState = GAME;
+	mIsWhiteTurn = true;
+	mBoard.Restart();
 }
 
 void App::Update()

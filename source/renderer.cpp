@@ -50,9 +50,15 @@ void Renderer::Render(const Board &board, const uint8_t activeIdx, const BitBoar
 	{
 		case W_PROMOTE:
 		case B_PROMOTE:
+		{ 
 			const MoveData lm = board.GetLastMove();
 			const uint8_t col = lm.To % 8;
 			RenderPromote(gameState == W_PROMOTE, col);
+			break;
+		}
+		case W_WIN:
+		case B_WIN:
+			RenderWin(gameState == W_WIN);	
 			break;
 	}
 	SDL_RenderPresent(pSDLRenderer);
@@ -143,7 +149,20 @@ void Renderer::RenderPromote(const bool isWhite, const uint8_t col)
 	}
 }
 
-void Renderer::loadAllPieces()
+void Renderer::RenderWin(const bool isWhite)
+{
+	SDL_FRect r {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+	isWhite ? SDL_SetRenderDrawColor(pSDLRenderer, 0, 0, 0, 80) : SDL_SetRenderDrawColor(pSDLRenderer, 255, 255, 255, 80);
+	SDL_RenderFillRect(pSDLRenderer, &r);	
+	SDL_Texture* t = winTextures[static_cast<int>(isWhite)];
+	r.w = BoardSize * 0.7f;
+	r.h = r.w * (static_cast<float>(t->h) / t->w);
+	r.x = BoardX + (BoardSize-r.w) / 2.f;
+	r.y = BoardY + (BoardSize-r.h) / 2.f;
+	SDL_RenderTexture(pSDLRenderer, t, nullptr, &r);
+}
+
+void Renderer::loadAllTextures()
 {
 	pieceTextures[W_PAWN] = LoadTexture("resources/w-pawn.png", pSDLRenderer);
 	pieceTextures[W_KNIGHT] = LoadTexture("resources/w-knight.png", pSDLRenderer);
@@ -158,6 +177,9 @@ void Renderer::loadAllPieces()
 	pieceTextures[B_ROOK] = LoadTexture("resources/b-rook.png", pSDLRenderer);
 	pieceTextures[B_QUEEN] = LoadTexture("resources/b-queen.png", pSDLRenderer);
 	pieceTextures[B_KING] = LoadTexture("resources/b-king.png", pSDLRenderer);
+
+	winTextures[0] = LoadTexture("resources/win_black.png", pSDLRenderer);
+	winTextures[1] = LoadTexture("resources/win_white.png", pSDLRenderer);
 }
 
 void Renderer::UpdateFPS()
@@ -219,7 +241,7 @@ Renderer::Renderer()
 {
 	InitSDL();
 	InitTTF();
-	loadAllPieces();
+	loadAllTextures();
 }
 
 Renderer::~Renderer()

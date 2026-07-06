@@ -29,17 +29,19 @@ private:
 	float BoardY = mBoardSettings.OffsetTop;
 	float BoardSize = std::min(SCREEN_WIDTH - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, SCREEN_HEIGHT - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
 	std::array<SDL_Texture*, 12> pieceTextures;
+	std::array<SDL_Texture*, 2> winTextures;
 	SDL_FRect PromoteRect;
 	SDL_Texture* LoadTexture(const std::string& path, SDL_Renderer* renderer);
 	void ClearPiecesTextures();
 	void RenderWinState(SDL_Renderer* renderer, const bool IsWinnerWhite);
 	void RenderBoard(const Board& board, const uint8_t activeIdx, const BitBoard activeMoves);
 	void RenderPromote(const bool isWhite, const uint8_t col);
+	void RenderWin(const bool isWhite);
 	void InitTTF();
 	void InitSDL();
 public:
 	void Render(const Board& board, const uint8_t activeIdx, const BitBoard activeMoves, const GameState gameState);
-	void loadAllPieces();
+	void loadAllTextures();
 	void UpdateFPS();
 	int8_t GetIdxAtPosition(const float posX, const float posY) const;
 	PieceTypeAndColor GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const;
