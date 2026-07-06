@@ -5,7 +5,7 @@
 #include "global.h"
 
 
-enum PieceTypeAndColor { W_PAWN = 0, W_KNIGHT = 1, W_BISHOP = 2, W_ROOK = 3, W_QUEEN = 4, W_KING = 5, B_PAWN = 6, B_KNIGHT = 7, B_BISHOP = 8, B_ROOK = 9, B_QUEEN = 10, B_KING = 11};
+enum PieceTypeAndColor { W_PAWN = 0, W_KNIGHT = 1, W_BISHOP = 2, W_ROOK = 3, W_QUEEN = 4, W_KING = 5, B_PAWN = 6, B_KNIGHT = 7, B_BISHOP = 8, B_ROOK = 9, B_QUEEN = 10, B_KING = 11, NONE = -1};
 
 enum SquareColor {WHITE, BLACK, EMPTY};
 
@@ -29,9 +29,10 @@ struct Castle {
 };
 
 struct MoveData {
-    int Pc;
     uint8_t From;
     uint8_t To;
+    bool IsWhite;
+    int Pc;
 };
 
 class Board {
@@ -87,5 +88,7 @@ public:
     SquareColor GetColor(const int pc) const;
     SquareColor GetColorAtIdx(const int8_t idx) const;
     bool IsOccupiedAtIdx(const int8_t idx) const;
+    const MoveData& GetLastMove() const; 
+    void PromotePawn(const PieceTypeAndColor toPc);
     Board();
 };

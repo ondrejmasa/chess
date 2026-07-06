@@ -79,7 +79,7 @@ void Board::InitBoard()
 
 void Board::InitKnightMoves()
 {
-	for (int sq = A1; sq < H8; ++sq)
+	for (int sq = A1; sq <= H8; ++sq)
 	{
 		BitBoard knight = 1ULL << sq;
 		BitBoard moves = 0ULL;
@@ -107,7 +107,7 @@ void Board::InitKnightMoves()
 
 void Board::InitKingMoves()
 {
-	for (int sq = A1; sq < H8; ++sq)
+	for (int sq = A1; sq <= H8; ++sq)
 	{
 		BitBoard king = 1ULL << sq;
 		BitBoard moves = 0ULL;
@@ -602,7 +602,7 @@ void Board::Move(const uint8_t from, const uint8_t to)
 	}
 
 	OccupiedBB = WhiteBB | BlackBB;
-	LastMove = {pc, from, to};
+	LastMove = {from, to, pcCol == WHITE, pc};
 }
 
 GameState Board::UpdateAfterMove()
@@ -667,6 +667,16 @@ GameState Board::UpdateAfterMove()
 			return W_WIN;
 		}
 	}
+	if (pc == W_PAWN and to >= A8)
+	{
+		std::cout << "W_PROMOTE \n";
+		return W_PROMOTE;
+	}
+	else if (pc == B_PAWN and to <= H1)
+	{
+		std::cout << "B_PROMOTE \n";
+		return B_PROMOTE;
+	}
 	return GAME;
 }
 
@@ -691,6 +701,19 @@ SquareColor Board::GetColorAtIdx(const int8_t idx) const
 bool Board::IsOccupiedAtIdx(const int8_t idx) const
 {
 	return (OccupiedBB >> idx) & 1ULL;
+}
+
+const MoveData& Board::GetLastMove() const
+{
+   return LastMove;
+}
+
+void Board::PromotePawn(const PieceTypeAndColor toPc)
+{
+	BitBoard pcBB = 1ULL << LastMove.To;
+	PieceTypeAndColor pawn = LastMove.IsWhite ? W_PAWN : B_PAWN;
+	PieceBB[pawn] ^= pcBB;
+	PieceBB[toPc] ^= pcBB;
 }
 
 Board::Board()

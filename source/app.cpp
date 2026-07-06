@@ -5,13 +5,14 @@ void App::HandleLeftClick(const SDL_Event &event)
 	switch(mGameState)
 	{
 		case GAME:
+		{
 			int8_t idx = mRenderer.GetIdxAtPosition(event.button.x, event.button.y);
 			if (idx != mActiveIdx)
 			{
 				if ((mActiveMoves >> idx) & 1ULL)
 				{
 					mBoard.Move(mActiveIdx, idx);
-					GameState gs = mBoard.UpdateAfterMove();
+					mGameState = mBoard.UpdateAfterMove();
 					mActiveIdx = -1;
 					mActiveMoves = 0ULL;
 					mIsWhiteTurn = not mIsWhiteTurn;
@@ -31,6 +32,20 @@ void App::HandleLeftClick(const SDL_Event &event)
 				}
 			}
 			break;
+		};
+
+		case W_PROMOTE:
+		case B_PROMOTE:
+		{ 
+			PieceTypeAndColor pc = mRenderer.GetPromotePieceAtPosition(mGameState == W_PROMOTE, event.button.x, event.button.y);
+			if (pc != NONE)
+			{
+				mBoard.PromotePawn(pc);
+				mGameState = GAME;
+			}
+			break;
+		};
+			
 	}
 }
 

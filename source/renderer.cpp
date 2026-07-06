@@ -40,15 +40,26 @@ void Renderer::InitSDL()
 
 void Renderer::Render(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves, const GameState gameState)
 {
-	RenderBoard(board, activeIdx, activeMoves);	
-}
-
-void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves)
-{
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
 	SDL_RenderClear(pSDLRenderer);
 
+
+	RenderBoard(board, activeIdx, activeMoves);	
+	switch (gameState)
+	{
+		case W_PROMOTE:
+		case B_PROMOTE:
+			const MoveData lm = board.GetLastMove();
+			const uint8_t col = lm.To % 8;
+			RenderPromote(gameState == W_PROMOTE, col);
+			break;
+	}
+	SDL_RenderPresent(pSDLRenderer);
+}
+
+void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves)
+{
 	// background
 	const float cellSize = BoardSize / 8.f;
 	SDL_FRect rect = { BoardX, BoardY, BoardSize, BoardSize };
@@ -93,8 +104,43 @@ void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const Bi
 			}
 		}
 	}
+}
 
-	SDL_RenderPresent(pSDLRenderer);
+void Renderer::RenderPromote(const bool isWhite, const uint8_t col)
+{
+	SDL_FRect& r = PromoteRect;
+	r.w = BoardSize / 8.f;
+	r.h = r.w*4.f;
+	r.x = BoardX+r.w*col;
+	r.y = isWhite ? BoardY : BoardY + BoardSize - r.h; 
+	SDL_SetRenderDrawColor(pSDLRenderer, 20, 20, 20, 255);
+	SDL_RenderFillRect(pSDLRenderer, &r);
+	SDL_FRect r2 = r;
+	const float bw = 4.f;
+	r2.w -= bw;
+	r2.h -= bw;
+	r2.x += bw/2;
+	r2.y += bw/2;	
+	SDL_SetRenderDrawColor(pSDLRenderer, 255, 255, 255, 255);
+	SDL_RenderFillRect(pSDLRenderer, &r2);
+	r2 = r;
+	r2.h = r2.w;
+	if (isWhite)
+	{
+		for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
+		{
+			SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &r2);
+			r2.y += r2.w;
+		}
+	}
+	else
+	{
+		for (int pc = B_QUEEN; pc >= B_KNIGHT; --pc)
+		{
+			SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &r2);
+			r2.y += r2.w;
+		}		
+	}
 }
 
 void Renderer::loadAllPieces()
@@ -125,17 +171,48 @@ void Renderer::UpdateFPS()
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
 {
-	float boardX = (posX - BoardX);
-	float boardY = (posY - BoardY);
-	if (boardX >= BoardSize || boardX < 0 || boardY >= BoardSize || boardY < 0)
+	const float x = posX - BoardX;
+	const float y = posY - BoardY;
+	if (x >= BoardSize || x < 0 || y >= BoardSize || y < 0)
 	{
 		return -1;
 	}
-	float cellSize = BoardSize / 8.f;
-	int8_t row = boardY / cellSize;
-	int8_t col = boardX / cellSize;
-	int8_t idx = (7-row) * 8 + col;
+	const float cellSize = BoardSize / 8.f;
+	const int8_t row = y / cellSize;
+	const int8_t col = x / cellSize;
+	const int8_t idx = (7-row) * 8 + col;
 	return idx;
+}
+
+PieceTypeAndColor Renderer::GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const
+{
+	const float x = (posX - BoardX);
+	const float y = (posY - BoardY);
+	const SDL_FRect& r = PromoteRect;
+	if (x < r.x || x > r.x+r.w || y < r.y || y > r.y+r.h)
+		return NONE;
+	const float promY = y - r.y;
+	const int8_t row = promY / r.w;
+	int8_t i = 0;
+	if (isWhite)
+	{
+		for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
+		{
+			if (i == row)
+				return PieceTypeAndColor(pc);
+			++i;
+		}
+	}
+	else
+	{
+		for (int pc = B_QUEEN; pc >= B_KNIGHT; --pc)
+		{
+			if (i == row)
+				return PieceTypeAndColor(pc);
+			++i;
+		}		
+	}	
+	return NONE;
 }
 
 Renderer::Renderer()
