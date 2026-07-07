@@ -1,6 +1,7 @@
 # pragma once
 #include <cstdint>
 #include <array>
+#include <vector>
 #include <iostream>
 #include "global.h"
 
@@ -96,5 +97,7 @@ public:
     const MoveData& GetLastMove() const; 
     void PromotePawn(const PieceTypeAndColor toPc);
     void Restart();
+    std::vector<MoveData> GetAllWhiteMovesFromTo() const;
+    std::vector<MoveData> GetAllBlackMovesFromTo() const;
     Board();
 };

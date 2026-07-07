@@ -450,7 +450,11 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 	{
 		int checkerIdx = std::countr_zero(WhiteCheckers);
 		int kingIdx = std::countr_zero(PieceBB[B_KING]);
-		safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
+		int checkerPc = GetPieceAtIdx(checkerIdx);
+		if (checkerPc == W_BISHOP or checkerPc == W_QUEEN or checkerPc == W_ROOK)
+			safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
+		else
+			safeMaskBlack = WhiteCheckers;
 	}
 	else if (numWhiteCheckers > 1)
 		safeMaskBlack = 0ULL;
@@ -459,7 +463,11 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 	{
 		int checkerIdx = std::countr_zero(BlackCheckers);
 		int kingIdx = std::countr_zero(PieceBB[W_KING]);
-		safeMaskWhite = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
+		int checkerPc = GetPieceAtIdx(checkerIdx);
+		if (checkerPc == B_BISHOP or checkerPc == B_QUEEN or checkerPc == B_ROOK)
+			safeMaskWhite = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
+		else
+			safeMaskWhite = BlackCheckers;
 	}
 	else if (numBlackCheckers > 1)
 		safeMaskWhite = 0ULL;	
@@ -715,6 +723,43 @@ void Board::Restart()
     WhiteCastle.Restart();
     BlackCastle.Restart();
 	InitBoard();
+}
+
+std::vector<MoveData> Board::GetAllWhiteMovesFromTo() const
+{
+    std::vector<MoveData> moves;
+	BitBoard bb = WhiteBB; 
+	while (bb > 0) {
+		uint8_t from = std::countr_zero(bb);
+		BitBoard am = GetActiveMoves(from);
+		while (am > 0) {
+			MoveData move;
+			move.From = from;
+			move.To = std::countr_zero(am);
+			am &= (am - 1);
+		}
+		bb &= (bb - 1);
+	}
+	return moves;	
+}
+
+std::vector<MoveData> Board::GetAllBlackMovesFromTo() const
+{
+    std::vector<MoveData> moves;
+	BitBoard bb = BlackBB; 
+	while (bb > 0) {
+		uint8_t from = std::countr_zero(bb);
+		BitBoard am = GetActiveMoves(from);
+		while (am > 0) {
+			MoveData move;
+			move.From = from;
+			move.To = std::countr_zero(am);
+			moves.push_back(move);
+			am &= (am - 1);
+		}
+		bb &= (bb - 1);
+	}
+	return moves;	
 }
 
 Board::Board()
