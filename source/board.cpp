@@ -52,53 +52,29 @@ void Board::InitRayFromTo()
 
 void Board::InitBoard()
 {
-	// OccupiedBB = 0ULL;
-	// PieceBB.fill(0ULL);
-
-	// for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
-	// for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
-
-	// PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
-	// PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
-	// PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
-	// PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
-	// PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
-	// PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
-	// PieceBB[W_QUEEN] = (1ULL << D1);
-	// PieceBB[B_QUEEN] = (1ULL << D8);
-	// PieceBB[W_KING] = (1ULL << E1);
-	// PieceBB[B_KING] = (1ULL << E8);
-
-	// WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
-	// BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
-	// OccupiedBB = WhiteBB | BlackBB;
-
-	// WhiteAttacks = GetAllWhiteAttacks();
-	// BlackAttacks = GetAllBlackAttacks();
-
-
-
 	OccupiedBB = 0ULL;
-    PieceBB.fill(0ULL);
+	PieceBB.fill(0ULL);
 
-    // 1. Rozmístění figur pro test En Passant úniku ze šachu
-    PieceBB[W_KING] = (1ULL << D4); // Bílý král pod šachem
-    PieceBB[W_PAWN] = (1ULL << F5); // Bílý pěšec připravený k braní mimochodem
+	for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
+	for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
 
-    PieceBB[B_KING] = (1ULL << A8); // Černý král mimo dění
-    PieceBB[B_PAWN] = (1ULL << E7); // Černý pěšec, který právě dal šach
+	PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
+	PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
+	PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
+	PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
+	PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
+	PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
+	PieceBB[W_QUEEN] = (1ULL << D1);
+	PieceBB[B_QUEEN] = (1ULL << D8);
+	PieceBB[W_KING] = (1ULL << E1);
+	PieceBB[B_KING] = (1ULL << E8);
 
-    // Zbytek figur necháme prázdný (pole bylo vynulováno pomocí fill(0ULL))
+	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
+	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
+	OccupiedBB = WhiteBB | BlackBB;
 
-    // 2. Aktualizace bitboardů stran
-    WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
-    BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
-    OccupiedBB = WhiteBB | BlackBB;
-
-    // 3. Aktualizace útoků
-	BlackCastle.KingMoved = true; WhiteCastle.KingMoved = true;
-    WhiteAttacks = GetAllWhiteAttacks();
-    BlackAttacks = GetAllBlackAttacks();
+	WhiteAttacks = GetAllWhiteAttacks();
+	BlackAttacks = GetAllBlackAttacks();
 }
 
 void Board::InitKnightMoves()
