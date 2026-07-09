@@ -133,7 +133,7 @@ void Board::InitKingMoves()
 	}
 }
 
-BitBoard Board::GetRookMoves(const int8_t idx) const
+BitBoard Board::GetRookMoves(const uint8_t idx) const
 {
 	BitBoard moves = 0ULL;
 	auto r = idx / 8;
@@ -158,7 +158,7 @@ BitBoard Board::GetRookMoves(const int8_t idx) const
 	return moves;
 }
 
-BitBoard Board::GetBishopMoves(const int8_t idx) const
+BitBoard Board::GetBishopMoves(const uint8_t idx) const
 {
 	BitBoard moves = 0ULL;
 	auto r = idx / 8;
@@ -183,7 +183,55 @@ BitBoard Board::GetBishopMoves(const int8_t idx) const
 	return moves;
 }
 
-BitBoard Board::GetPawnMoves(const int8_t idx) const
+BitBoard Board::GetRookMask(const uint8_t idx) const
+{
+	BitBoard mask = 0ULL;
+	auto r = idx / 8;
+	auto c = idx % 8;
+
+	int dr[4] = { 1, -1, 0, 0 };
+	int dc[4] = { 0, 0, 1, -1 };
+
+	for (auto i = 0; i < 4; ++i)
+	{
+		int nr = r + dr[i];
+		int nc = c + dc[i];
+		while (nr >= 0 and nr < 8 and nc >= 0 and nc < 8)
+		{
+			BitBoard bit = 1ULL << (8 * nr + nc);
+			mask |= bit;
+			nr += dr[i];
+			nc += dc[i];
+		}
+	}
+	return mask;
+}
+
+BitBoard Board::GetBishopMask(const uint8_t idx) const
+{
+	BitBoard mask = 0ULL;
+	auto r = idx / 8;
+	auto c = idx % 8;
+
+	int dr[4] = { 1, -1, 1, -1 };
+	int dc[4] = { 1, 1, -1, -1 };
+
+	for (auto i = 0; i < 4; ++i)
+	{
+		int nr = r + dr[i];
+		int nc = c + dc[i];
+		while (nr >= 0 and nr < 8 and nc >= 0 and nc < 8)
+		{
+			BitBoard bit = 1ULL << (8 * nr + nc);
+			mask |= bit;
+			nr += dr[i];
+			nc += dc[i];
+		}
+	}
+	return mask;
+}
+
+BitBoard Board::GetPawnMoves(const uint8_t idx) const
 {
 	const BitBoard pos = 1ULL << idx;
 	BitBoard moves = 0ULL;
@@ -220,7 +268,7 @@ BitBoard Board::GetPawnMoves(const int8_t idx) const
 	return moves;
 }
 
-BitBoard Board::GetPawnAttacks(const int8_t idx) const
+BitBoard Board::GetPawnAttacks(const uint8_t idx) const
 {
 	const BitBoard pos = 1ULL << idx;
 	BitBoard moves = 0ULL;
@@ -295,7 +343,7 @@ BitBoard Board::GetBlackCheckers() const
 	return checkers;
 }
 
-BitBoard Board::GetActiveAttacks(const int8_t idx) const
+BitBoard Board::GetActiveAttacks(const uint8_t idx) const
 {
 	const int pc = GetPieceAtIdx(idx);
 	if (pc == -1)
@@ -328,11 +376,11 @@ BitBoard Board::GetActiveAttacks(const int8_t idx) const
 BitBoard Board::GetWhitePins() const
 {
 	BitBoard pins = 0ULL;
-	BitBoard sliders = PieceBB[B_QUEEN] | PieceBB[B_ROOK] | PieceBB[B_BISHOP];
-	int kingIdx = std::countr_zero(PieceBB[W_KING]);
-	while (sliders != 0ULL)
+	const int kingIdx = std::countr_zero(PieceBB[W_KING]);
+	BitBoard orthoSliders = (PieceBB[B_QUEEN] | PieceBB[B_ROOK]) & GetRookMask(kingIdx);
+	while (orthoSliders != 0ULL)
 	{
-		int sliderIdx = std::countr_zero(sliders);
+		int sliderIdx = std::countr_zero(orthoSliders);
 		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
 		BitBoard pcOnRay = ray & OccupiedBB & ~PieceBB[W_KING] & ~(1ULL << sliderIdx);
 		if (std::popcount(pcOnRay) == 1)
@@ -342,7 +390,22 @@ BitBoard Board::GetWhitePins() const
 				pins |= pcOnRay;
 			}
 		}
-		sliders &= sliders-1;
+		orthoSliders &= orthoSliders-1;
+	}
+	BitBoard diagSliders = (PieceBB[B_QUEEN] | PieceBB[B_BISHOP]) & GetBishopMask(kingIdx);
+	while (diagSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(diagSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		BitBoard pcOnRay = ray & OccupiedBB & ~PieceBB[W_KING] & ~(1ULL << sliderIdx);
+		if (std::popcount(pcOnRay) == 1)
+		{
+			if (pcOnRay & WhiteBB)
+			{
+				pins |= pcOnRay;
+			}
+		}
+		diagSliders &= diagSliders-1;
 	}
 	return pins;
 }
@@ -350,11 +413,11 @@ BitBoard Board::GetWhitePins() const
 BitBoard Board::GetBlackPins() const
 {
 	BitBoard pins = 0ULL;
-	BitBoard sliders = PieceBB[W_QUEEN] | PieceBB[W_ROOK] | PieceBB[W_BISHOP];
-	int kingIdx = std::countr_zero(PieceBB[B_KING]);
-	while (sliders != 0ULL)
+	const int kingIdx = std::countr_zero(PieceBB[B_KING]);
+	BitBoard orthoSliders = (PieceBB[W_QUEEN] | PieceBB[W_ROOK]) & GetRookMask(kingIdx);
+	while (orthoSliders != 0ULL)
 	{
-		int sliderIdx = std::countr_zero(sliders);
+		int sliderIdx = std::countr_zero(orthoSliders);
 		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
 		BitBoard pcOnRay = ray & OccupiedBB & ~PieceBB[B_KING] & ~(1ULL << sliderIdx);
 		if (std::popcount(pcOnRay) == 1)
@@ -364,7 +427,22 @@ BitBoard Board::GetBlackPins() const
 				pins |= pcOnRay;
 			}
 		}
-		sliders &= sliders-1;
+		orthoSliders &= orthoSliders-1;
+	}
+	BitBoard diagSliders = (PieceBB[W_QUEEN] | PieceBB[W_BISHOP]) & GetBishopMask(kingIdx);
+	while (diagSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(diagSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		BitBoard pcOnRay = ray & OccupiedBB & ~PieceBB[B_KING] & ~(1ULL << sliderIdx);
+		if (std::popcount(pcOnRay) == 1)
+		{
+			if (pcOnRay & BlackBB)
+			{
+				pins |= pcOnRay;
+			}
+		}
+		diagSliders &= diagSliders-1;
 	}
 	return pins;
 }
@@ -391,6 +469,56 @@ BitBoard Board::GetAllBlackMoves() const
 		bb &= (bb - 1);
 	}
 	return moves;
+}
+
+BitBoard Board::GetWhitePinRay(const uint8_t idx) const
+{
+	const int kingIdx = std::countr_zero(PieceBB[W_KING]);
+	BitBoard pcBB = 1ULL << idx;
+	BitBoard orthoSliders = (PieceBB[B_QUEEN] | PieceBB[B_ROOK]) & GetRookMask(kingIdx);
+	while (orthoSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(orthoSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		if (ray & pcBB)
+			return ray;
+		orthoSliders &= orthoSliders-1;
+	}
+	BitBoard diagSliders = (PieceBB[B_QUEEN] | PieceBB[B_BISHOP]) & GetBishopMask(kingIdx);
+	while (diagSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(diagSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		if (ray & pcBB)
+			return ray;
+		diagSliders &= diagSliders-1;
+	}
+	return 0ULL;
+}
+
+BitBoard Board::GetBlackPinRay(const uint8_t idx) const
+{
+	const int kingIdx = std::countr_zero(PieceBB[B_KING]);
+	BitBoard pcBB = 1ULL << idx;
+	BitBoard orthoSliders = (PieceBB[W_QUEEN] | PieceBB[W_ROOK]) & GetRookMask(kingIdx);
+	while (orthoSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(orthoSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		if (ray & pcBB)
+			return ray;
+		orthoSliders &= orthoSliders-1;
+	}
+	BitBoard diagSliders = (PieceBB[W_QUEEN] | PieceBB[W_BISHOP]) & GetBishopMask(kingIdx);
+	while (diagSliders != 0ULL)
+	{
+		int sliderIdx = std::countr_zero(diagSliders);
+		BitBoard ray = RayFromTo[kingIdx][sliderIdx];
+		if (ray & pcBB)
+			return ray;
+		diagSliders &= diagSliders-1;
+	}
+	return 0ULL;
 }
 
 bool Board::CanWhiteCastleRight() const
@@ -421,7 +549,7 @@ bool Board::CanBlackCastleLeft() const
 	return true;
 }
 
-int Board::GetPieceAtIdx(const int8_t idx) const
+int Board::GetPieceAtIdx(const uint8_t idx) const
 {
 	for (int pc = W_PAWN; pc <= B_KING; ++pc)
 	{
@@ -433,17 +561,19 @@ int Board::GetPieceAtIdx(const int8_t idx) const
 	return -1;
 }
 
-BitBoard Board::GetActiveMoves(const int8_t idx) const
+BitBoard Board::GetActiveMoves(const uint8_t idx) const
 {
 	const int pc = GetPieceAtIdx(idx);
 	if (pc == -1)
 		return 0ULL;
 	
-	if ((1ULL << idx) & (WhitePins | BlackPins))
-		return 0ULL;
+	BitBoard PinMask {-1ULL};
+	if ((1ULL << idx) & WhitePins)
+		PinMask = GetWhitePinRay(idx);
+	if ((1ULL << idx) & BlackPins)
+		PinMask = GetBlackPinRay(idx);
 	
-	BitBoard safeMaskWhite {-1ULL};
-	BitBoard safeMaskBlack {-1ULL};
+	BitBoard safeMask {-1ULL};
 	const int numWhiteCheckers = std::popcount(WhiteCheckers);
 	const int numBlackCheckers = std::popcount(BlackCheckers);
 	if (numWhiteCheckers == 1)
@@ -452,12 +582,12 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 		int kingIdx = std::countr_zero(PieceBB[B_KING]);
 		int checkerPc = GetPieceAtIdx(checkerIdx);
 		if (checkerPc == W_BISHOP or checkerPc == W_QUEEN or checkerPc == W_ROOK)
-			safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
+			safeMask = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
 		else
-			safeMaskBlack = WhiteCheckers;
+			safeMask = WhiteCheckers;
 	}
 	else if (numWhiteCheckers > 1)
-		safeMaskBlack = 0ULL;
+		safeMask = 0ULL;
 
 	if (numBlackCheckers == 1)
 	{
@@ -465,20 +595,20 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 		int kingIdx = std::countr_zero(PieceBB[W_KING]);
 		int checkerPc = GetPieceAtIdx(checkerIdx);
 		if (checkerPc == B_BISHOP or checkerPc == B_QUEEN or checkerPc == B_ROOK)
-			safeMaskWhite = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
+			safeMask = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
 		else
-			safeMaskWhite = BlackCheckers;
+			safeMask = BlackCheckers;
 	}
 	else if (numBlackCheckers > 1)
-		safeMaskWhite = 0ULL;	
+		safeMask = 0ULL;	
 
 	BitBoard castle {0ULL};
 	switch (pc)
 	{
 		case B_KNIGHT:
-			return KnightMoves[idx] & ~ BlackBB & safeMaskBlack;
+			return KnightMoves[idx] & ~ BlackBB & safeMask & PinMask;
 		case W_KNIGHT:
-			return KnightMoves[idx] & ~ WhiteBB & safeMaskWhite;
+			return KnightMoves[idx] & ~ WhiteBB & safeMask & PinMask;
 		case B_KING:
 			if (numWhiteCheckers == 0)
 			{
@@ -494,25 +624,22 @@ BitBoard Board::GetActiveMoves(const int8_t idx) const
 			}
 			return (KingMoves[idx] & ~WhiteBB & ~ BlackAttacks) | castle;
 		case W_ROOK:
-			return GetRookMoves(idx) & ~WhiteBB & safeMaskWhite;
+			return GetRookMoves(idx) & ~WhiteBB & safeMask & PinMask;
 		case B_ROOK:
-			return GetRookMoves(idx) & ~BlackBB & safeMaskBlack;
+			return GetRookMoves(idx) & ~BlackBB & safeMask & PinMask;
 		case W_BISHOP:
-			return GetBishopMoves(idx) & ~WhiteBB & safeMaskWhite;
+			return GetBishopMoves(idx) & ~WhiteBB & safeMask & PinMask;
 		case B_BISHOP:
-			return GetBishopMoves(idx) & ~BlackBB & safeMaskBlack;
+			return GetBishopMoves(idx) & ~BlackBB & safeMask & PinMask;
 		case W_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB & safeMaskWhite;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB & safeMask & PinMask;
 		case B_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB & safeMaskBlack;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB & safeMask & PinMask;
 		case B_PAWN:
-			return GetPawnMoves(idx) & safeMaskBlack;
+			return GetPawnMoves(idx) & safeMask & PinMask;
 		case W_PAWN:
-			return GetPawnMoves(idx) & safeMaskWhite;
+			return GetPawnMoves(idx) & safeMask & PinMask;
 	}
-
-	// nejsem v checku -> musím pohnout tak, abych se do něj nedostal
-
 	return 0ULL;
 }
 
@@ -683,7 +810,7 @@ SquareColor Board::GetColor(const int pc) const
 	return BLACK;
 }
 
-SquareColor Board::GetColorAtIdx(const int8_t idx) const
+SquareColor Board::GetColorAtIdx(const uint8_t idx) const
 {
 	if (not IsOccupiedAtIdx(idx))
 		return EMPTY;
@@ -692,7 +819,7 @@ SquareColor Board::GetColorAtIdx(const int8_t idx) const
 	return BLACK;
 }
 
-bool Board::IsOccupiedAtIdx(const int8_t idx) const
+bool Board::IsOccupiedAtIdx(const uint8_t idx) const
 {
 	return (OccupiedBB >> idx) & 1ULL;
 }
