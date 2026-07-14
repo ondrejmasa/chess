@@ -65,6 +65,13 @@ void App::Restart()
 void App::Update()
 {
 	mRenderer.UpdateFPS();
+	if (not mIsWhiteTurn)
+	{
+		MinimaxMove move = GetBestMove(mBoard, 4, false);
+		mBoard.Move(move.From, move.To);
+		mBoard.UpdateAfterMove();
+		mIsWhiteTurn = not mIsWhiteTurn;
+	}
 }
 
 
@@ -96,6 +103,11 @@ void App::Run()
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
 					HandleLeftClick(event);
+				}
+				if (event.button.button == SDL_BUTTON_RIGHT)
+				{
+					mBoard.UndoMove();
+					mIsWhiteTurn = not mIsWhiteTurn;
 				}
 			}
 		}

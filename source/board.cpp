@@ -549,6 +549,147 @@ bool Board::CanBlackCastleLeft() const
 	return true;
 }
 
+int Board::GetEvaluationPieceValue(const bool isWhite) const
+{
+    constexpr int pVal = 100;
+	constexpr int nVal = 320;
+	constexpr int bVal = 330;
+	constexpr int rVal = 500;
+	constexpr int qVal = 900;
+	constexpr int kVal = 20000;
+	BitBoard p, n, b, r, q, k;
+	if (isWhite)
+	{
+		p = PieceBB[W_PAWN];
+		n = PieceBB[W_KNIGHT];
+		b = PieceBB[W_BISHOP];
+		r = PieceBB[W_ROOK];
+		q = PieceBB[W_QUEEN];
+		k = PieceBB[W_KING];	
+	}
+	else
+	{
+		p = PieceBB[B_PAWN];
+		n = PieceBB[B_KNIGHT];
+		b = PieceBB[B_BISHOP];
+		r = PieceBB[B_ROOK];
+		q = PieceBB[B_QUEEN];
+		k = PieceBB[B_KING];	
+	}
+	int result = 0;
+	result += pVal * std::popcount(p);
+	result += nVal * std::popcount(n);
+	result += bVal * std::popcount(b);
+	result += rVal * std::popcount(r);
+	result += qVal * std::popcount(q);
+	result += kVal * std::popcount(k);
+	return result;
+}
+
+int Board::GetEvaluationByColor(const bool isWhite) const
+{
+	constexpr std::array<int8_t, 64> pTable =  
+        {0,  0,  0,  0,  0,  0,  0,  0,
+         5, 10, 10,-20,-20, 10, 10,  5,
+         5, -5,-10,  0,  0,-10, -5,  5,
+         0,  0,  0, 20, 20,  0,  0,  0,
+         5,  5, 10, 25, 25, 10,  5,  5,
+        10, 10, 20, 30, 30, 20, 10, 10,
+        50, 50, 50, 50, 50, 50, 50, 50,
+         0,  0,  0,  0,  0,  0,  0,  0};
+
+    constexpr std::array<int8_t, 64> nTable =  
+        {-50,-40,-30,-30,-30,-30,-40,-50,
+         -40,-20,  0,  5,  5,  0,-20,-40,
+         -30,  5, 10, 15, 15, 10,  5,-30,
+         -30,  0, 15, 20, 20, 15,  0,-30,
+         -30,  5, 15, 20, 20, 15,  5,-30,
+         -30,  0, 10, 15, 15, 10,  0,-30,
+         -40,-20,  0,  0,  0,  0,-20,-40,
+         -50,-40,-30,-30,-30,-30,-40,-50};
+
+    constexpr std::array<int8_t, 64> bTable =  
+        {-20,-10,-10,-10,-10,-10,-10,-20,
+         -10,  5,  0,  0,  0,  0,  5,-10,
+         -10, 10, 10, 10, 10, 10, 10,-10,
+         -10,  0, 10, 10, 10, 10,  0,-10,
+         -10,  5,  5, 10, 10,  5,  5,-10,
+         -10,  0,  5, 10, 10,  5,  0,-10,
+         -10,  0,  0,  0,  0,  0,  0,-10,
+         -20,-10,-10,-10,-10,-10,-10,-20};
+
+    constexpr std::array<int8_t, 64> rTable =  
+        { 0,  0,  0,  5,  5,  0,  0,  0,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+          5, 10, 10, 10, 10, 10, 10,  5,
+          0,  0,  0,  0,  0,  0,  0,  0};
+
+    constexpr std::array<int8_t, 64> qTable =  
+        {-20,-10,-10, -5, -5,-10,-10,-20,
+         -10,  0,  5,  0,  0,  0,  0,-10,
+         -10,  5,  5,  5,  5,  5,  0,-10,
+           0,  0,  5,  5,  5,  5,  0, -5,
+          -5,  0,  5,  5,  5,  5,  0, -5,
+         -10,  0,  5,  5,  5,  5,  0,-10,
+         -10,  0,  0,  0,  0,  0,  0,-10,
+         -20,-10,-10, -5, -5,-10,-10,-20};
+
+    constexpr std::array<int8_t, 64> kTable =  // TODO: Add end game table for king
+        { 20, 30, 10,  0,  0, 10, 30, 20,
+          20, 20,  0,  0,  0,  0, 20, 20,
+         -10,-20,-20,-20,-20,-20,-20,-10,
+         -20,-30,-30,-40,-40,-30,-30,-20,
+         -30,-40,-40,-50,-50,-40,-40,-30,
+         -30,-40,-40,-50,-50,-40,-40,-30,
+         -30,-40,-40,-50,-50,-40,-40,-30,
+         -30,-40,-40,-50,-50,-40,-40,-30};
+
+	BitBoard flip = isWhite ? 0ULL : 56ULL; // 56 flips rows with xor operation 
+	int result = GetEvaluationPieceValue(isWhite);
+
+	BitBoard bb = PieceBB[isWhite ? W_PAWN : B_PAWN];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += pTable[idx];
+		bb &= (bb - 1);
+	}
+	bb = PieceBB[isWhite ? W_KNIGHT : B_KNIGHT];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += nTable[idx];
+		bb &= (bb - 1);
+	}
+	bb = PieceBB[isWhite ? W_BISHOP : B_BISHOP];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += bTable[idx];
+		bb &= (bb - 1);
+	}
+	bb = PieceBB[isWhite ? W_ROOK : B_ROOK];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += rTable[idx];
+		bb &= (bb - 1);
+	}
+	bb = PieceBB[isWhite ? W_QUEEN : B_QUEEN];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += qTable[idx];
+		bb &= (bb - 1);
+	}
+	bb = PieceBB[isWhite ? W_KING : B_KING];
+	while (bb > 0) {
+		const int idx = std::countr_zero(bb) ^ flip;
+		result += kTable[idx];
+		bb &= (bb - 1);
+	}
+	return result;
+}
+
 int Board::GetPieceAtIdx(const uint8_t idx) const
 {
 	for (int pc = W_PAWN; pc <= B_KING; ++pc)
@@ -728,6 +869,119 @@ void Board::Move(const uint8_t from, const uint8_t to)
 
 	OccupiedBB = WhiteBB | BlackBB;
 	LastMove = {from, to, pcCol == WHITE, pc};
+
+	// save current state before this move to history
+	BoardState state;
+	state.WhiteEnPassant = WhiteEnPassant;
+	state.BlackEnPassant = BlackEnPassant;
+	state.WhiteCheckers  = WhiteCheckers;
+	state.BlackCheckers  = BlackCheckers;
+	state.WhiteAttacks   = WhiteAttacks;
+	state.BlackAttacks   = BlackAttacks;
+	state.WhitePins      = WhitePins;
+	state.BlackPins      = BlackPins;
+	state.WhiteCastle    = WhiteCastle;
+	state.BlackCastle    = BlackCastle;
+	state.Move       	 = LastMove; 
+	state.capturedPiece  = (PieceTypeAndColor)pc2;
+	BoardHistory.push_back(state);
+}
+
+void Board::UndoMove()
+{
+	BoardState& state = BoardHistory.back();
+	WhiteEnPassant = state.WhiteEnPassant;
+	BlackEnPassant = state.BlackEnPassant;
+	WhiteCheckers = state.WhiteCheckers;
+	BlackCheckers = state.BlackCheckers;
+	WhiteAttacks = state.WhiteAttacks;
+	BlackAttacks = state.BlackAttacks;
+	WhitePins = state.WhitePins;
+	BlackPins = state.BlackPins;
+	WhiteCastle = state.WhiteCastle;
+	BlackCastle	= state.BlackCastle;
+
+	const int pc = state.Move.Pc;
+	const int pc2 = state.capturedPiece;
+	const uint8_t to = state.Move.To;
+	const uint8_t from = state.Move.From;
+	const BitBoard toBB = 1ULL << to;
+	const BitBoard fromBB = 1ULL << from;
+	const BitBoard fromToBB = fromBB ^ toBB;
+
+	// move pc
+	PieceBB[pc] ^= fromToBB;
+	const SquareColor pcCol = GetColor(pc);
+	if (pcCol == WHITE)
+		WhiteBB ^= fromToBB;
+	else
+		BlackBB ^= fromToBB;
+
+	// place back captured figure
+	if (pc2 != NONE)
+	{
+		PieceBB[pc2] ^= toBB;
+		if (pcCol == WHITE)
+			BlackBB ^= toBB;
+		else
+			WhiteBB ^= toBB;		
+	}
+
+	// place back en passant
+	if (pc == W_PAWN)
+	{
+		if ((BlackEnPassant >> to) & 1ULL)
+		{
+			BitBoard rm = 1ULL << (to-8);
+			PieceBB[B_PAWN] ^= rm;	
+			BlackBB ^= rm;
+		}
+	}
+	else if (pc == B_PAWN)
+	{
+		if ((WhiteEnPassant >> to) & 1ULL)
+		{
+			BitBoard rm = 1ULL << (to+8);
+			PieceBB[W_PAWN] ^= rm;	
+			WhiteBB ^= rm;
+		}		
+	}
+
+	// check for castle moves
+	if (pc == W_KING)
+	{
+		BitBoard rm {0ULL};
+		if (to == G1)
+		{
+			rm = (1ULL << H1) | (1ULL << F1);
+			PieceBB[W_ROOK] ^= rm;
+		}
+		else if (to == C1)
+		{
+			rm = (1ULL << A1) | (1ULL << D1);
+			PieceBB[W_ROOK] ^= rm;
+		}
+		WhiteBB ^= rm;
+	}
+	else if (pc == B_KING)
+	{
+		BitBoard rm {0ULL};
+		if (to == G8)
+		{
+			rm = (1ULL << H8) | (1ULL << F8);
+			PieceBB[B_ROOK] ^= rm;
+		}
+		else if (to == C8)
+		{
+			rm = (1ULL << A8) | (1ULL << D8);
+			PieceBB[B_ROOK] ^= rm;
+		}
+		BlackBB ^= rm;		
+	}
+
+	OccupiedBB = WhiteBB | BlackBB;
+
+	BoardHistory.pop_back();
 }
 
 GameState Board::UpdateAfterMove()
@@ -770,12 +1024,10 @@ GameState Board::UpdateAfterMove()
 	{
 		if (BlackCheckers == 0)
 		{
-			std::cout << "Stalemate! \n";
 			return STALEMATE;
 		}
 		else
 		{
-			std::cout << "Black win! \n";
 			return B_WIN;
 		}
 	}
@@ -783,23 +1035,19 @@ GameState Board::UpdateAfterMove()
 	{
 		if (WhiteCheckers == 0)
 		{
-			std::cout << "Stalemate! \n";
 			return STALEMATE;
 		}
 		else
 		{
-			std::cout << "White win! \n";
 			return W_WIN;
 		}
 	}
 	if (pc == W_PAWN and to >= A8)
 	{
-		std::cout << "W_PROMOTE \n";
 		return W_PROMOTE;
 	}
 	else if (pc == B_PAWN and to <= H1)
 	{
-		std::cout << "B_PROMOTE \n";
 		return B_PROMOTE;
 	}
 	return GAME;
@@ -839,6 +1087,18 @@ void Board::PromotePawn(const PieceTypeAndColor toPc)
 	PieceTypeAndColor pawn = LastMove.IsWhite ? W_PAWN : B_PAWN;
 	PieceBB[pawn] ^= pcBB;
 	PieceBB[toPc] ^= pcBB;
+	if (LastMove.IsWhite)
+	{
+		WhiteAttacks = GetAllWhiteAttacks();
+		WhiteCheckers = GetWhiteCheckers();
+		BlackPins = GetBlackPins();
+	}
+	else
+	{
+		BlackAttacks = GetAllBlackAttacks();
+		BlackCheckers = GetBlackCheckers();
+		WhitePins = GetWhitePins();
+	}
 }
 
 void Board::Restart()
@@ -856,6 +1116,11 @@ void Board::Restart()
 	InitBoard();
 }
 
+std::vector<MoveData> Board::GetAllMovesFromTo(const bool isWhite) const
+{
+    return isWhite ? GetAllWhiteMovesFromTo() : GetAllBlackMovesFromTo();
+}
+
 std::vector<MoveData> Board::GetAllWhiteMovesFromTo() const
 {
     std::vector<MoveData> moves;
@@ -867,6 +1132,7 @@ std::vector<MoveData> Board::GetAllWhiteMovesFromTo() const
 			MoveData move;
 			move.From = from;
 			move.To = std::countr_zero(am);
+			moves.push_back(move);
 			am &= (am - 1);
 		}
 		bb &= (bb - 1);
@@ -891,6 +1157,11 @@ std::vector<MoveData> Board::GetAllBlackMovesFromTo() const
 		bb &= (bb - 1);
 	}
 	return moves;	
+}
+
+int Board::GetEvaluation() const
+{
+	return GetEvaluationByColor(true) - GetEvaluationByColor(false);
 }
 
 Board::Board()

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include "global.h"
 #include "board.h"
+#include "minimax.h"
 
 class App {
 private:

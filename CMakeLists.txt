@@ -23,6 +23,7 @@ add_executable (chess
     "include/renderer.h" "source/renderer.cpp"
     "include/global.h" 
     "source/board.cpp" "include/board.h"
+    "include/minimax.h" "source/minimax.cpp"
     "source/Vector2.cpp" "include/Vector2.h")
 
 # 3. Prolinkování knihoven (vcpkg používá moderní jmenné prostory s dvojtečkou)

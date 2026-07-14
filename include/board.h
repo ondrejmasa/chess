@@ -41,6 +41,21 @@ struct MoveData {
     int Pc;
 };
 
+struct BoardState {
+    BitBoard WhiteEnPassant;
+    BitBoard BlackEnPassant;
+    BitBoard WhiteCheckers;
+    BitBoard BlackCheckers;
+    BitBoard WhiteAttacks;
+    BitBoard BlackAttacks;
+    BitBoard WhitePins;
+    BitBoard BlackPins;
+    Castle WhiteCastle;
+    Castle BlackCastle;
+    MoveData Move;
+    PieceTypeAndColor capturedPiece;
+};
+
 class Board {
 private:
     const BitBoard NotAFile = 0xFEFEFEFEFEFEFEFEULL;
@@ -61,6 +76,7 @@ private:
     std::array<BitBoard, 64> KingMoves;
     std::array<std::array<BitBoard, 64>, 64> RayFromTo;
     MoveData LastMove;
+    std::vector<BoardState> BoardHistory;
     void InitRayFromTo();
 	void InitBoard();
     void InitKnightMoves();
@@ -86,6 +102,10 @@ private:
     bool CanWhiteCastleLeft() const;
     bool CanBlackCastleRight() const;
     bool CanBlackCastleLeft() const; 
+    int GetEvaluationPieceValue(const bool isWhite) const;
+    int GetEvaluationByColor(const bool isWhite) const;
+    std::vector<MoveData> GetAllWhiteMovesFromTo() const;
+    std::vector<MoveData> GetAllBlackMovesFromTo() const;
 public:
     std::array<BitBoard, 12> PieceBB;
     BitBoard WhiteBB;
@@ -94,6 +114,7 @@ public:
     int GetPieceAtIdx(const uint8_t idx) const;
     BitBoard GetActiveMoves(const uint8_t idx) const;
     void Move(const uint8_t from, const uint8_t to);
+    void UndoMove();
     GameState UpdateAfterMove();
     SquareColor GetColor(const int pc) const;
     SquareColor GetColorAtIdx(const uint8_t idx) const;
@@ -101,7 +122,7 @@ public:
     const MoveData& GetLastMove() const; 
     void PromotePawn(const PieceTypeAndColor toPc);
     void Restart();
-    std::vector<MoveData> GetAllWhiteMovesFromTo() const;
-    std::vector<MoveData> GetAllBlackMovesFromTo() const;
+    std::vector<MoveData> GetAllMovesFromTo(const bool isWhite) const;
+    int GetEvaluation() const;
     Board();
 };
