@@ -816,36 +816,36 @@ void Board::Move(const uint8_t from, const uint8_t to)
 	}
 
 	// check for castle moves
-	if (pc == W_KING)
-	{
-		BitBoard rm {0ULL};
-		if (to == G1)
-		{
-			rm = (1ULL << H1) | (1ULL << F1);
-			PieceBB[W_ROOK] ^= rm;
-		}
-		else if (to == C1)
-		{
-			rm = (1ULL << A1) | (1ULL << D1);
-			PieceBB[W_ROOK] ^= rm;
-		}
-		WhiteBB ^= rm;
-	}
-	else if (pc == B_KING)
-	{
-		BitBoard rm {0ULL};
-		if (to == G8)
-		{
-			rm = (1ULL << H8) | (1ULL << F8);
-			PieceBB[B_ROOK] ^= rm;
-		}
-		else if (to == C8)
-		{
-			rm = (1ULL << A8) | (1ULL << D8);
-			PieceBB[B_ROOK] ^= rm;
-		}
-		BlackBB ^= rm;		
-	}
+	if (pc == W_KING and from == E1)
+    {
+        BitBoard rm {0ULL};
+        if (to == G1)
+        {
+            rm = (1ULL << H1) | (1ULL << F1);
+            PieceBB[W_ROOK] ^= rm;
+        }
+        else if (to == C1)
+        {
+            rm = (1ULL << A1) | (1ULL << D1);
+            PieceBB[W_ROOK] ^= rm;
+        }
+        WhiteBB ^= rm;
+    }
+    else if (pc == B_KING and from == E8) 
+    {
+        BitBoard rm {0ULL};
+        if (to == G8)
+        {
+            rm = (1ULL << H8) | (1ULL << F8);
+            PieceBB[B_ROOK] ^= rm;
+        }
+        else if (to == C8)
+        {
+            rm = (1ULL << A8) | (1ULL << D8);
+            PieceBB[B_ROOK] ^= rm;
+        }
+        BlackBB ^= rm;      
+    }
 
 	// check for en passant moves
 	if (pc == W_PAWN)
@@ -948,36 +948,36 @@ void Board::UndoMove()
 	}
 
 	// check for castle moves
-	if (pc == W_KING)
-	{
-		BitBoard rm {0ULL};
-		if (to == G1)
-		{
-			rm = (1ULL << H1) | (1ULL << F1);
-			PieceBB[W_ROOK] ^= rm;
-		}
-		else if (to == C1)
-		{
-			rm = (1ULL << A1) | (1ULL << D1);
-			PieceBB[W_ROOK] ^= rm;
-		}
-		WhiteBB ^= rm;
-	}
-	else if (pc == B_KING)
-	{
-		BitBoard rm {0ULL};
-		if (to == G8)
-		{
-			rm = (1ULL << H8) | (1ULL << F8);
-			PieceBB[B_ROOK] ^= rm;
-		}
-		else if (to == C8)
-		{
-			rm = (1ULL << A8) | (1ULL << D8);
-			PieceBB[B_ROOK] ^= rm;
-		}
-		BlackBB ^= rm;		
-	}
+	if (pc == W_KING and from == E1)
+    {
+        BitBoard rm {0ULL};
+        if (to == G1)
+        {
+            rm = (1ULL << H1) | (1ULL << F1);
+            PieceBB[W_ROOK] ^= rm;
+        }
+        else if (to == C1)
+        {
+            rm = (1ULL << A1) | (1ULL << D1);
+            PieceBB[W_ROOK] ^= rm;
+        }
+        WhiteBB ^= rm;
+    }
+    else if (pc == B_KING and from == E8)
+    {
+        BitBoard rm {0ULL};
+        if (to == G8)
+        {
+            rm = (1ULL << H8) | (1ULL << F8);
+            PieceBB[B_ROOK] ^= rm;
+        }
+        else if (to == C8)
+        {
+            rm = (1ULL << A8) | (1ULL << D8);
+            PieceBB[B_ROOK] ^= rm;
+        }
+        BlackBB ^= rm;      
+    }
 
 	OccupiedBB = WhiteBB | BlackBB;
 
@@ -993,11 +993,11 @@ GameState Board::UpdateAfterMove()
 	switch(pc){
 		case W_KING: WhiteCastle.KingMoved = true; break;
 		case B_KING: BlackCastle.KingMoved = true; break;
-		case W_ROOK:
-			from == A1 ? WhiteCastle.LeftRookMoved = true : WhiteCastle.RightRookMoved = true; break;
-		case B_ROOK:
-			from == A8 ? BlackCastle.LeftRookMoved = true : BlackCastle.RightRookMoved = true; break;
 	}
+	if (from == H1 or to == H1) WhiteCastle.RightRookMoved = true;
+	if (from == A1 or to == A1) WhiteCastle.LeftRookMoved = true;
+	if (from == H8 or to == H8) BlackCastle.RightRookMoved = true;
+	if (from == A8 or to == A8) BlackCastle.LeftRookMoved = true;
 
 	// update en passant info
 	WhiteEnPassant = 0ULL;

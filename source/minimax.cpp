@@ -10,7 +10,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
     {
         return board.GetEvaluation();    
     }
-    int bestVal = isWhite ? -9999999 : 9999999;
+    int bestVal = isWhite ? -99999999 : 99999999;
     const std::vector<MoveData>& moves = board.GetAllMovesFromTo(isWhite); 
     for (const MoveData& m : moves)
     {
