@@ -65,9 +65,9 @@ void App::Restart()
 void App::Update()
 {
 	mRenderer.UpdateFPS();
-	if (not mIsWhiteTurn)
+	if (mIsWhiteTurn)
 	{
-		MinimaxMove move = GetBestMove(mBoard, 4, false);
+		MinimaxMove move = GetBestMove(mBoard, 4, mIsWhiteTurn);
 		mBoard.Move(move.From, move.To);
 		mBoard.UpdateAfterMove();
 		mIsWhiteTurn = not mIsWhiteTurn;

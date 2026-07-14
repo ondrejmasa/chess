@@ -708,13 +708,15 @@ BitBoard Board::GetActiveMoves(const uint8_t idx) const
 	if (pc == -1)
 		return 0ULL;
 	
-	BitBoard PinMask {-1ULL};
+	BitBoard PinMaskWhite {-1ULL};
+	BitBoard PinMaskBlack {-1ULL};
 	if ((1ULL << idx) & WhitePins)
-		PinMask = GetWhitePinRay(idx);
+		PinMaskWhite = GetWhitePinRay(idx);
 	if ((1ULL << idx) & BlackPins)
-		PinMask = GetBlackPinRay(idx);
+		PinMaskBlack = GetBlackPinRay(idx);
 	
-	BitBoard safeMask {-1ULL};
+	BitBoard safeMaskWhite {-1ULL};
+	BitBoard safeMaskBlack {-1ULL};
 	const int numWhiteCheckers = std::popcount(WhiteCheckers);
 	const int numBlackCheckers = std::popcount(BlackCheckers);
 	if (numWhiteCheckers == 1)
@@ -723,14 +725,14 @@ BitBoard Board::GetActiveMoves(const uint8_t idx) const
 		int kingIdx = std::countr_zero(PieceBB[B_KING]);
 		int checkerPc = GetPieceAtIdx(checkerIdx);
 		if (checkerPc == W_BISHOP or checkerPc == W_QUEEN or checkerPc == W_ROOK)
-			safeMask = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
+			safeMaskBlack = (GetActiveAttacks(checkerIdx) | WhiteCheckers) & RayFromTo[checkerIdx][kingIdx];
 		else
-			safeMask = WhiteCheckers;
+			safeMaskBlack = WhiteCheckers;
 		if (checkerPc == W_PAWN and pc == B_PAWN)
-			safeMask |= WhiteEnPassant;
+			safeMaskBlack |= WhiteEnPassant;
 	}
 	else if (numWhiteCheckers > 1)
-		safeMask = 0ULL;
+		safeMaskBlack = 0ULL;
 
 	if (numBlackCheckers == 1)
 	{
@@ -738,22 +740,22 @@ BitBoard Board::GetActiveMoves(const uint8_t idx) const
 		int kingIdx = std::countr_zero(PieceBB[W_KING]);
 		int checkerPc = GetPieceAtIdx(checkerIdx);
 		if (checkerPc == B_BISHOP or checkerPc == B_QUEEN or checkerPc == B_ROOK)
-			safeMask = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
+			safeMaskWhite = (GetActiveAttacks(checkerIdx) | BlackCheckers) & RayFromTo[checkerIdx][kingIdx];
 		else
-			safeMask = BlackCheckers;
+			safeMaskWhite = BlackCheckers;
 		if (checkerPc == B_PAWN and pc == W_PAWN)
-			safeMask |= BlackEnPassant;
+			safeMaskWhite |= BlackEnPassant;
 	}
 	else if (numBlackCheckers > 1)
-		safeMask = 0ULL;	
+		safeMaskWhite = 0ULL;	
 
 	BitBoard castle {0ULL};
 	switch (pc)
 	{
 		case B_KNIGHT:
-			return KnightMoves[idx] & ~ BlackBB & safeMask & PinMask;
+			return KnightMoves[idx] & ~ BlackBB & safeMaskBlack & PinMaskBlack;
 		case W_KNIGHT:
-			return KnightMoves[idx] & ~ WhiteBB & safeMask & PinMask;
+			return KnightMoves[idx] & ~ WhiteBB & safeMaskWhite & PinMaskWhite;
 		case B_KING:
 			if (numWhiteCheckers == 0)
 			{
@@ -769,21 +771,21 @@ BitBoard Board::GetActiveMoves(const uint8_t idx) const
 			}
 			return (KingMoves[idx] & ~WhiteBB & ~ BlackAttacks) | castle;
 		case W_ROOK:
-			return GetRookMoves(idx) & ~WhiteBB & safeMask & PinMask;
+			return GetRookMoves(idx) & ~WhiteBB & safeMaskWhite & PinMaskWhite;
 		case B_ROOK:
-			return GetRookMoves(idx) & ~BlackBB & safeMask & PinMask;
+			return GetRookMoves(idx) & ~BlackBB & safeMaskBlack & PinMaskBlack;
 		case W_BISHOP:
-			return GetBishopMoves(idx) & ~WhiteBB & safeMask & PinMask;
+			return GetBishopMoves(idx) & ~WhiteBB & safeMaskWhite & PinMaskWhite;
 		case B_BISHOP:
-			return GetBishopMoves(idx) & ~BlackBB & safeMask & PinMask;
+			return GetBishopMoves(idx) & ~BlackBB & safeMaskBlack & PinMaskBlack;
 		case W_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB & safeMask & PinMask;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~WhiteBB & safeMaskWhite & PinMaskWhite;
 		case B_QUEEN:
-			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB & safeMask & PinMask;
+			return (GetRookMoves(idx) | GetBishopMoves(idx)) & ~BlackBB & safeMaskBlack & PinMaskBlack;
 		case B_PAWN:
-			return GetPawnMoves(idx) & safeMask & PinMask;
+			return GetPawnMoves(idx) & safeMaskBlack & PinMaskBlack;
 		case W_PAWN:
-			return GetPawnMoves(idx) & safeMask & PinMask;
+			return GetPawnMoves(idx) & safeMaskWhite & PinMaskWhite;
 	}
 	return 0ULL;
 }
