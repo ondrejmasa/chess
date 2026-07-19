@@ -50,57 +50,31 @@ void Board::InitRayFromTo()
 	}
 }
 
-// void Board::InitBoard()
-// {
-// 	OccupiedBB = 0ULL;
-// 	PieceBB.fill(0ULL);
-
-// 	for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
-// 	for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
-
-// 	PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
-// 	PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
-// 	PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
-// 	PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
-// 	PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
-// 	PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
-// 	PieceBB[W_QUEEN] = (1ULL << D1);
-// 	PieceBB[B_QUEEN] = (1ULL << D8);
-// 	PieceBB[W_KING] = (1ULL << E1);
-// 	PieceBB[B_KING] = (1ULL << E8);
-
-// 	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
-// 	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
-// 	OccupiedBB = WhiteBB | BlackBB;
-
-// 	WhiteAttacks = GetAllWhiteAttacks();
-// 	BlackAttacks = GetAllBlackAttacks();
-// }
-
 void Board::InitBoard()
 {
-OccupiedBB = 0ULL;
-    PieceBB.fill(0ULL);
+	OccupiedBB = 0ULL;
+	PieceBB.fill(0ULL);
 
-    // --- BÍLÝ (Oběť matu) ---
-    // Bílý král je uvězněn na A2 ve vlastní kleci
-    PieceBB[W_KING]   = (1ULL << A2);
-    PieceBB[W_ROOK]   = (1ULL << A1) | (1ULL << F8); // A1 blokuje krále, F8 hrozí matem v dalším tahu
-    PieceBB[W_BISHOP] = (1ULL << B1);                // Blokuje políčko B1
-    PieceBB[W_PAWN]   = (1ULL << A3) | (1ULL << B3) | (1ULL << B2); // Zbytek klece
-    PieceBB[W_QUEEN]  = (1ULL << D5);                // Dáma na D5 (NEURČUJE šach na H7, ale drtí desku)
+	for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
+	for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
 
-    // --- ČERNÝ (Na tahu - tvůj AI bot) ---
-    PieceBB[B_KING]   = (1ULL << G7); // Král v bezpečí na H7 (mimo šach!)
-    PieceBB[B_PAWN]   = (1ULL << C2); // Pěšec připravený na vítěznou proměnu
+	PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
+	PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
+	PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
+	PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
+	PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
+	PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
+	PieceBB[W_QUEEN] = (1ULL << D1);
+	PieceBB[B_QUEEN] = (1ULL << D8);
+	PieceBB[W_KING] = (1ULL << E1);
+	PieceBB[B_KING] = (1ULL << E8);
 
-    // Sestavení souhrnných bitboardů
-    WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
-    BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
-    OccupiedBB = WhiteBB | BlackBB;
+	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
+	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
+	OccupiedBB = WhiteBB | BlackBB;
 
-    WhiteAttacks = GetAllWhiteAttacks();
-    BlackAttacks = GetAllBlackAttacks();
+	WhiteAttacks = GetAllWhiteAttacks();
+	BlackAttacks = GetAllBlackAttacks();
 }
 
 void Board::InitKnightMoves()
@@ -1028,7 +1002,7 @@ bool Board::UndoMove()
 
 GameState Board::UpdateAfterMove()
 {
-	int pc = LastMove.Pc;
+	int pc = GetPieceAtIdx(LastMove.To);
 	uint8_t from = LastMove.From;
 	uint8_t to = LastMove.To;
 	// update castle info
@@ -1062,6 +1036,14 @@ GameState Board::UpdateAfterMove()
 	BitBoard whiteMoves = GetAllWhiteMoves();
 	BitBoard blackMoves = GetAllBlackMoves();
 
+	if (pc == W_PAWN and to >= A8)
+	{
+		return W_PROMOTE;
+	}
+	else if (pc == B_PAWN and to <= H1)
+	{
+		return B_PROMOTE;
+	}
 	if (!whiteMoves)
 	{
 		if (BlackCheckers == 0)
@@ -1083,14 +1065,6 @@ GameState Board::UpdateAfterMove()
 		{
 			return W_WIN;
 		}
-	}
-	if (pc == W_PAWN and to >= A8)
-	{
-		return W_PROMOTE;
-	}
-	else if (pc == B_PAWN and to <= H1)
-	{
-		return B_PROMOTE;
 	}
 	return GAME;
 }

@@ -26,7 +26,7 @@ private:
 public:
 	App() : mPlayers{
 		std::make_unique<User>(mRenderer, false),    
-		std::make_unique<User>(mRenderer, true) 
+		std::make_unique<Computer>(mRenderer, true) 
 	} {};
 	virtual ~App();
 	void Run();

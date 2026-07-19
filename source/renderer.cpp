@@ -53,7 +53,7 @@ void Renderer::Render(const Board &board, const GameState gameState)
 		{ 
 			const MoveData lm = board.GetLastMove();
 			const uint8_t col = lm.To % 8;
-			RenderPromote(gameState == W_PROMOTE, col);
+			// RenderPromote(gameState == W_PROMOTE, col);
 			break;
 		}
 		case W_WIN:

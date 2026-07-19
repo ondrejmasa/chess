@@ -3,9 +3,9 @@
 int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite)
  {
     if (gamestate == W_WIN)
-        return 9999999;
+        return 9999999 + depth;
     else if (gamestate == B_WIN)
-        return -9999999;
+        return -9999999 - depth;
     else if (gamestate != GAME or depth == 0)
     {
         return board.GetEvaluation();    
@@ -25,7 +25,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
             for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
-                board.UpdateAfterMove(); 
+                // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
                 val = Minimax(board, GAME, depth-1, not isWhite);   
                 bestVal = std::max(bestVal, val); 
@@ -39,7 +39,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
             for (int pc = B_KNIGHT; pc <= B_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
-                board.UpdateAfterMove(); 
+                // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
                 val = Minimax(board, GAME, depth-1, not isWhite);   
                 bestVal = std::min(bestVal, val); 
@@ -83,7 +83,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
             for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
-                board.UpdateAfterMove(); 
+                // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
                 val = Minimax(board, GAME, depth-1, not isWhite);   
                 board.UndoMove();
@@ -104,7 +104,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
             for (int pc = B_KNIGHT; pc <= B_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
-                board.UpdateAfterMove(); 
+                // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
                 val = Minimax(board, GAME, depth-1, not isWhite);   
                 board.UndoMove();
