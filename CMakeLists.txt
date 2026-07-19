@@ -10,6 +10,8 @@ endif()
 
 project ("chess" CXX)
 
+# set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+
 # Odsud dál pokračuje tvůj kód...
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
@@ -24,7 +26,7 @@ add_executable (chess
     "include/global.h" 
     "source/board.cpp" "include/board.h"
     "include/minimax.h" "source/minimax.cpp"
-    "source/Vector2.cpp" "include/Vector2.h")
+    "source/player.cpp" "include/player.h")
 
 # 3. Prolinkování knihoven (vcpkg používá moderní jmenné prostory s dvojtečkou)
 target_link_libraries(chess PRIVATE 

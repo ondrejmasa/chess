@@ -4,36 +4,6 @@ void App::HandleLeftClick(const SDL_Event &event)
 {
 	switch(mGameState)
 	{
-		case GAME:
-		{
-			int8_t idx = mRenderer.GetIdxAtPosition(event.button.x, event.button.y);
-			if (idx != mActiveIdx)
-			{
-				if ((mActiveMoves >> idx) & 1ULL)
-				{
-					mBoard.Move(mActiveIdx, idx);
-					mGameState = mBoard.UpdateAfterMove();
-					mActiveIdx = -1;
-					mActiveMoves = 0ULL;
-					mIsWhiteTurn = not mIsWhiteTurn;
-				}
-				else
-				{
-					SquareColor clr = mBoard.GetColorAtIdx(idx);
-					if (clr != EMPTY and mIsWhiteTurn == (clr == BLACK))
-					{
-						std::cout << "wrong color\n";
-						mActiveIdx = -1;
-						mActiveMoves = 0ULL;
-						return;
-					}
-					mActiveIdx = idx;
-					mActiveMoves = mBoard.GetActiveMoves(idx);
-				}
-			}
-			break;
-		}
-
 		case W_PROMOTE:
 		case B_PROMOTE:
 		{ 
@@ -41,7 +11,7 @@ void App::HandleLeftClick(const SDL_Event &event)
 			if (pc != NONE)
 			{
 				mBoard.PromotePawn(pc);
-				mGameState = GAME;
+				mGameState = mBoard.UpdateAfterMove();
 			}
 			break;
 		}
@@ -55,33 +25,36 @@ void App::HandleLeftClick(const SDL_Event &event)
 
 void App::Restart()
 {
-	mActiveIdx = -1;
-	mActiveMoves = 0ULL;
 	mGameState = GAME;
 	mIsWhiteTurn = true;
+	mRenderer.Restart();
 	mBoard.Restart();
 }
 
 void App::Update()
 {
 	mRenderer.UpdateFPS();
-	if (mIsWhiteTurn)
+	if (mGameState == GAME)
 	{
-		MinimaxMove move = GetBestMove(mBoard, 4, mIsWhiteTurn);
-		mBoard.Move(move.From, move.To);
-		mBoard.UpdateAfterMove();
-		mIsWhiteTurn = not mIsWhiteTurn;
+		MinimaxMove move = mPlayers[(int)mIsWhiteTurn]->GenerateMove(mBoard);
+		if (move.To != -1)
+		{
+			mBoard.Move(move.From, move.To);
+			mGameState = mBoard.UpdateAfterMove();
+			if (move.PromotePc != NONE)
+			{
+				mBoard.PromotePawn(move.PromotePc);
+				mGameState = mBoard.UpdateAfterMove();
+			}
+			mIsWhiteTurn = not mIsWhiteTurn;		
+		}
 	}
 }
 
 
 void App::Render()
 {
-	mRenderer.Render(mBoard, mActiveIdx, mActiveMoves, mGameState);
-}
-
-App::App()
-{
+	mRenderer.Render(mBoard, mGameState);
 }
 
 App::~App()
@@ -106,8 +79,10 @@ void App::Run()
 				}
 				if (event.button.button == SDL_BUTTON_RIGHT)
 				{
-					mBoard.UndoMove();
-					mIsWhiteTurn = not mIsWhiteTurn;
+					if (mBoard.UndoMove());
+					{
+						mIsWhiteTurn = not mIsWhiteTurn;
+					}
 				}
 			}
 		}

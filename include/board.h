@@ -114,7 +114,7 @@ public:
     int GetPieceAtIdx(const uint8_t idx) const;
     BitBoard GetActiveMoves(const uint8_t idx) const;
     void Move(const uint8_t from, const uint8_t to);
-    void UndoMove();
+    bool UndoMove();
     GameState UpdateAfterMove();
     SquareColor GetColor(const int pc) const;
     SquareColor GetColorAtIdx(const uint8_t idx) const;

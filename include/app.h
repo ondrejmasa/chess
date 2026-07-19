@@ -9,21 +9,25 @@
 #include "global.h"
 #include "board.h"
 #include "minimax.h"
+#include "player.h"
+#include <memory>
 
 class App {
 private:
 	Renderer mRenderer;
 	Board mBoard;
-	int8_t mActiveIdx = -1;
-	BitBoard mActiveMoves = 0ULL;
 	GameState mGameState = GAME;
+	std::array<std::unique_ptr<Player>, 2> mPlayers;
 	bool mIsWhiteTurn = true;
 	void HandleLeftClick(const SDL_Event& event);
 	void Restart();
 	void Update();
 	void Render();
 public:
-	App();
+	App() : mPlayers{
+		std::make_unique<User>(mRenderer, false),    
+		std::make_unique<User>(mRenderer, true) 
+	} {};
 	virtual ~App();
 	void Run();
 };

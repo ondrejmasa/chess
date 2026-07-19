@@ -1,3 +1,4 @@
+#pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -34,15 +35,18 @@ private:
 	SDL_Texture* LoadTexture(const std::string& path, SDL_Renderer* renderer);
 	void ClearPiecesTextures();
 	void RenderWinState(SDL_Renderer* renderer, const bool IsWinnerWhite);
-	void RenderBoard(const Board& board, const uint8_t activeIdx, const BitBoard activeMoves);
+	void RenderBoard(const Board& board);
 	void RenderPromote(const bool isWhite, const uint8_t col);
 	void RenderWin(const bool isWhite);
 	void InitTTF();
 	void InitSDL();
 public:
-	void Render(const Board& board, const uint8_t activeIdx, const BitBoard activeMoves, const GameState gameState);
+	uint8_t ActiveIdx = -1;
+	BitBoard ActiveMoves = 0ULL;
+	void Render(const Board& board, const GameState gameState);
 	void loadAllTextures();
 	void UpdateFPS();
+	void Restart();
 	int8_t GetIdxAtPosition(const float posX, const float posY) const;
 	PieceTypeAndColor GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const;
 	Renderer();

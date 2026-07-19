@@ -38,14 +38,14 @@ void Renderer::InitSDL()
 	SDL_SetRenderVSync(pSDLRenderer, 1);
 }
 
-void Renderer::Render(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves, const GameState gameState)
+void Renderer::Render(const Board &board, const GameState gameState)
 {
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
 	SDL_RenderClear(pSDLRenderer);
 
 
-	RenderBoard(board, activeIdx, activeMoves);	
+	RenderBoard(board);	
 	switch (gameState)
 	{
 		case W_PROMOTE:
@@ -64,7 +64,7 @@ void Renderer::Render(const Board &board, const uint8_t activeIdx, const BitBoar
 	SDL_RenderPresent(pSDLRenderer);
 }
 
-void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const BitBoard activeMoves)
+void Renderer::RenderBoard(const Board &board)
 {
 	// background
 	const float cellSize = BoardSize / 8.f;
@@ -85,7 +85,7 @@ void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const Bi
 		for (auto j = 0; j < 8; ++j) {
 			auto idx = i * 8 + j;
 			// active moves
-			if (activeMoves >> idx & 1ULL)
+			if (ActiveMoves >> idx & 1ULL)
 			{
 				float sz = cellSize * 0.75f;
 				float o = (cellSize - sz) / 2;
@@ -99,7 +99,7 @@ void Renderer::RenderBoard(const Board &board, const uint8_t activeIdx, const Bi
 				if ((board.PieceBB[pc] >> idx) & 1ULL)
 				{
 					rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
-					if (activeIdx == idx)
+					if (ActiveIdx == idx)
 					{
 						SDL_SetRenderDrawColor(pSDLRenderer, 163, 120, 71, 255);
 						SDL_RenderFillRect(pSDLRenderer, &rect);
@@ -189,6 +189,12 @@ void Renderer::UpdateFPS()
 		float fps = mFpsCounter.GetFps();
 		SDL_SetWindowTitle(pWindow, ("FPS: " + std::to_string(fps)).c_str());
 	}
+}
+
+void Renderer::Restart()
+{
+	ActiveIdx = -1;
+	ActiveMoves = 0ULL;
 }
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const

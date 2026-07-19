@@ -50,31 +50,57 @@ void Board::InitRayFromTo()
 	}
 }
 
+// void Board::InitBoard()
+// {
+// 	OccupiedBB = 0ULL;
+// 	PieceBB.fill(0ULL);
+
+// 	for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
+// 	for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
+
+// 	PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
+// 	PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
+// 	PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
+// 	PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
+// 	PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
+// 	PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
+// 	PieceBB[W_QUEEN] = (1ULL << D1);
+// 	PieceBB[B_QUEEN] = (1ULL << D8);
+// 	PieceBB[W_KING] = (1ULL << E1);
+// 	PieceBB[B_KING] = (1ULL << E8);
+
+// 	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
+// 	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
+// 	OccupiedBB = WhiteBB | BlackBB;
+
+// 	WhiteAttacks = GetAllWhiteAttacks();
+// 	BlackAttacks = GetAllBlackAttacks();
+// }
+
 void Board::InitBoard()
 {
-	OccupiedBB = 0ULL;
-	PieceBB.fill(0ULL);
+OccupiedBB = 0ULL;
+    PieceBB.fill(0ULL);
 
-	for (int sq = A2; sq <= H2; ++sq) PieceBB[W_PAWN] |= (1ULL << sq);
-	for (int sq = A7; sq <= H7; ++sq) PieceBB[B_PAWN] |= (1ULL << sq);
+    // --- BÍLÝ (Oběť matu) ---
+    // Bílý král je uvězněn na A2 ve vlastní kleci
+    PieceBB[W_KING]   = (1ULL << A2);
+    PieceBB[W_ROOK]   = (1ULL << A1) | (1ULL << F8); // A1 blokuje krále, F8 hrozí matem v dalším tahu
+    PieceBB[W_BISHOP] = (1ULL << B1);                // Blokuje políčko B1
+    PieceBB[W_PAWN]   = (1ULL << A3) | (1ULL << B3) | (1ULL << B2); // Zbytek klece
+    PieceBB[W_QUEEN]  = (1ULL << D5);                // Dáma na D5 (NEURČUJE šach na H7, ale drtí desku)
 
-	PieceBB[W_ROOK] = (1ULL << A1) | (1ULL << H1);
-	PieceBB[B_ROOK] = (1ULL << A8) | (1ULL << H8);
-	PieceBB[W_KNIGHT] = (1ULL << B1) | (1ULL << G1);
-	PieceBB[B_KNIGHT] = (1ULL << B8) | (1ULL << G8);
-	PieceBB[W_BISHOP] = (1ULL << C1) | (1ULL << F1);
-	PieceBB[B_BISHOP] = (1ULL << C8) | (1ULL << F8);
-	PieceBB[W_QUEEN] = (1ULL << D1);
-	PieceBB[B_QUEEN] = (1ULL << D8);
-	PieceBB[W_KING] = (1ULL << E1);
-	PieceBB[B_KING] = (1ULL << E8);
+    // --- ČERNÝ (Na tahu - tvůj AI bot) ---
+    PieceBB[B_KING]   = (1ULL << G7); // Král v bezpečí na H7 (mimo šach!)
+    PieceBB[B_PAWN]   = (1ULL << C2); // Pěšec připravený na vítěznou proměnu
 
-	WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
-	BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
-	OccupiedBB = WhiteBB | BlackBB;
+    // Sestavení souhrnných bitboardů
+    WhiteBB = PieceBB[W_PAWN] | PieceBB[W_ROOK] | PieceBB[W_KNIGHT] | PieceBB[W_BISHOP] | PieceBB[W_QUEEN] | PieceBB[W_KING];
+    BlackBB = PieceBB[B_PAWN] | PieceBB[B_ROOK] | PieceBB[B_KNIGHT] | PieceBB[B_BISHOP] | PieceBB[B_QUEEN] | PieceBB[B_KING];
+    OccupiedBB = WhiteBB | BlackBB;
 
-	WhiteAttacks = GetAllWhiteAttacks();
-	BlackAttacks = GetAllBlackAttacks();
+    WhiteAttacks = GetAllWhiteAttacks();
+    BlackAttacks = GetAllBlackAttacks();
 }
 
 void Board::InitKnightMoves()
@@ -889,8 +915,10 @@ void Board::Move(const uint8_t from, const uint8_t to)
 	BoardHistory.push_back(state);
 }
 
-void Board::UndoMove()
+bool Board::UndoMove()
 {
+	if (BoardHistory.size() == 0)
+		return false;
 	BoardState& state = BoardHistory.back();
 	WhiteEnPassant = state.WhiteEnPassant;
 	BlackEnPassant = state.BlackEnPassant;
@@ -902,14 +930,24 @@ void Board::UndoMove()
 	BlackPins = state.BlackPins;
 	WhiteCastle = state.WhiteCastle;
 	BlackCastle	= state.BlackCastle;
+	LastMove = state.Move;
 
-	const int pc = state.Move.Pc;
+
+	const int pc = LastMove.Pc;
+	if ((pc == W_PAWN and LastMove.To >= A8) or (pc == B_PAWN and LastMove.To <= H1))
+	{
+		int promPc = GetPieceAtIdx(LastMove.To);
+		const BitBoard promBB = 1ULL << LastMove.To;
+		PieceBB[promPc] ^= promBB;
+		PieceBB[pc] ^= promBB;
+	}
 	const int pc2 = state.capturedPiece;
-	const uint8_t to = state.Move.To;
-	const uint8_t from = state.Move.From;
+	const uint8_t to = LastMove.To;
+	const uint8_t from = LastMove.From;
 	const BitBoard toBB = 1ULL << to;
 	const BitBoard fromBB = 1ULL << from;
 	const BitBoard fromToBB = fromBB ^ toBB;
+
 
 	// move pc
 	PieceBB[pc] ^= fromToBB;
@@ -984,6 +1022,8 @@ void Board::UndoMove()
 	OccupiedBB = WhiteBB | BlackBB;
 
 	BoardHistory.pop_back();
+
+	return true;
 }
 
 GameState Board::UpdateAfterMove()
