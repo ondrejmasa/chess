@@ -687,6 +687,27 @@ int Board::GetEvaluationByColor(const bool isWhite) const
 		result += kTable[idx];
 		bb &= (bb - 1);
 	}
+
+	// AI generated part for the end game
+	int oppMaterial = GetEvaluationPieceValue(not isWhite);
+    if (result > oppMaterial + 400 and oppMaterial == 20000)
+    {
+        const int myKingIdx  = std::countr_zero(PieceBB[isWhite ? W_KING : B_KING]);
+        const int oppKingIdx = std::countr_zero(PieceBB[isWhite ? B_KING : W_KING]);
+        const int myKingRow  = myKingIdx / 8;
+        const int myKingCol  = myKingIdx % 8;
+        const int oppKingRow = oppKingIdx / 8;
+        const int oppKingCol = oppKingIdx % 8;
+        int matingBonus = 0;
+		// Pushing enemy king to the side and corner
+        int dstToCenter = std::max(3 - oppKingRow, oppKingRow - 4) + std::max(3 - oppKingCol, oppKingCol - 4);
+        matingBonus += dstToCenter * 10; 
+		// going closer with our king to the enemy king
+        int dstBetweenKings = std::abs(myKingRow - oppKingRow) + std::abs(myKingCol - oppKingCol);
+        matingBonus += (14 - dstBetweenKings) * 4;
+        result += matingBonus;
+    }
+
 	return result;
 }
 

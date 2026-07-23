@@ -17,6 +17,48 @@ struct BoardSettings
 	float OffsetBottom = 15.f;
 };
 
+
+class Animator {
+private:
+	const Uint64 ANIMATION_TIME = 100;
+	Uint64 StartTime;
+	float FromX;
+	float FromY;
+	float ToX;
+	float ToY;
+public:
+	void StartAnimation(const float fromX, const float fromY,const float toX,const float toY)
+	{
+		StartTime = SDL_GetTicks();
+		FromX = fromX;
+		FromY = fromY;
+		ToX = toX;
+		ToY = toY;
+	};
+
+	void GetActualPos(float& x, float& y)
+	{
+		Uint64 actTime = SDL_GetTicks();
+		Uint64 elapsedTime = actTime - StartTime;
+		if (elapsedTime > ANIMATION_TIME)
+		{
+			x = ToX;
+			y = ToY;
+			return;
+		}	
+
+		float t = static_cast<float>(elapsedTime) / static_cast<float>(ANIMATION_TIME);
+		x = FromX + t * (ToX - FromX);
+		y = FromY + t * (ToY - FromY);
+	};
+
+	bool isFinished() 
+	{
+		return SDL_GetTicks() - StartTime > ANIMATION_TIME;
+	}
+};
+
+
 class Renderer {
 private:
 	const int SCREEN_WIDTH = 800;
@@ -29,15 +71,17 @@ private:
 	float BoardX = mBoardSettings.OffsetLeft;
 	float BoardY = mBoardSettings.OffsetTop;
 	float BoardSize = std::min(SCREEN_WIDTH - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, SCREEN_HEIGHT - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
-	std::array<SDL_Texture*, 12> pieceTextures;
-	std::array<SDL_Texture*, 2> winTextures;
+	std::array<SDL_Texture*, 12> PieceTextures;
+	std::array<SDL_Texture*, 2> WinTextures;
+	SDL_Texture* StalemateTexture;
 	SDL_FRect PromoteRect;
+	MoveData LastMove;
+	Animator mAnimator;
 	SDL_Texture* LoadTexture(const std::string& path, SDL_Renderer* renderer);
-	void ClearPiecesTextures();
-	void RenderWinState(SDL_Renderer* renderer, const bool IsWinnerWhite);
+	void ClearAllTextures();
 	void RenderBoard(const Board& board);
 	void RenderPromote(const bool isWhite, const uint8_t col);
-	void RenderWin(const bool isWhite);
+	void RenderGameEnd(const GameState gameState);
 	void InitTTF();
 	void InitSDL();
 public:

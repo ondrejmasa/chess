@@ -18,6 +18,7 @@ void App::HandleLeftClick(const SDL_Event &event)
 
 		case W_WIN:
 		case B_WIN:
+		case STALEMATE:
 			Restart();
 			break;
 	}

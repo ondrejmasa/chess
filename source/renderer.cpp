@@ -11,19 +11,24 @@ SDL_Texture* Renderer::LoadTexture(const std::string& path, SDL_Renderer* render
 	return newTexture;
 }
 
-void Renderer::ClearPiecesTextures()
+void Renderer::ClearAllTextures()
 {
-	for (auto const& texture : pieceTextures) {
-		if (texture != nullptr) {
+	for (auto const& texture : PieceTextures)
+	{
+		if (texture != nullptr)
 			SDL_DestroyTexture(texture);
-		}
 	}
-	pieceTextures.fill(nullptr);
-}
+	PieceTextures.fill(nullptr);
 
-void Renderer::RenderWinState(SDL_Renderer* renderer, const bool IsWinnerWhite)
-{
+	for (auto const& texture : WinTextures)
+	{
+		if (texture != nullptr)
+			SDL_DestroyTexture(texture);
+	}
+	WinTextures.fill(nullptr);	
 
+	if (StalemateTexture != nullptr)
+		SDL_DestroyTexture(StalemateTexture);	
 }
 
 void Renderer::InitTTF()
@@ -44,7 +49,6 @@ void Renderer::Render(const Board &board, const GameState gameState)
 	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
 	SDL_RenderClear(pSDLRenderer);
 
-
 	RenderBoard(board);	
 	switch (gameState)
 	{
@@ -53,12 +57,13 @@ void Renderer::Render(const Board &board, const GameState gameState)
 		{ 
 			const MoveData lm = board.GetLastMove();
 			const uint8_t col = lm.To % 8;
-			// RenderPromote(gameState == W_PROMOTE, col);
+			RenderPromote(gameState == W_PROMOTE, col);
 			break;
 		}
 		case W_WIN:
 		case B_WIN:
-			RenderWin(gameState == W_WIN);	
+		case STALEMATE:
+			RenderGameEnd(gameState);	
 			break;
 	}
 	SDL_RenderPresent(pSDLRenderer);
@@ -66,8 +71,27 @@ void Renderer::Render(const Board &board, const GameState gameState)
 
 void Renderer::RenderBoard(const Board &board)
 {
-	// background
 	const float cellSize = BoardSize / 8.f;
+
+	const MoveData& lm = board.GetLastMove();
+	if (lm != LastMove)
+	{
+		uint8_t fr = lm.From / 8;	
+		uint8_t fc = lm.From % 8;	
+		uint8_t tr = lm.To / 8;	
+		uint8_t tc = lm.To % 8;
+
+		float fx = BoardX + fc * cellSize;
+		float fy = BoardY + (7 - fr) * cellSize;
+		float tx = BoardX + tc * cellSize;
+		float ty = BoardY + (7 - tr) * cellSize;
+
+		mAnimator.StartAnimation(fx, fy, tx, ty);
+		LastMove = lm;
+	}
+
+
+	// background
 	SDL_FRect rect = { BoardX, BoardY, BoardSize, BoardSize };
 	SDL_SetRenderDrawColor(pSDLRenderer, 242, 232, 231, 255);
 	SDL_RenderFillRect(pSDLRenderer, &rect);
@@ -104,11 +128,21 @@ void Renderer::RenderBoard(const Board &board)
 						SDL_SetRenderDrawColor(pSDLRenderer, 163, 120, 71, 255);
 						SDL_RenderFillRect(pSDLRenderer, &rect);
 					}
-					SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &rect);
+					if (idx != LastMove.To or mAnimator.isFinished())
+						SDL_RenderTexture(pSDLRenderer, PieceTextures[pc], nullptr, &rect);
 					break;
 				}
 			}
 		}
+	}
+
+	// animation of last move
+	if (not mAnimator.isFinished())
+	{
+		float x, y;
+		mAnimator.GetActualPos(x, y);
+		rect = {x, y, cellSize, cellSize};
+		SDL_RenderTexture(pSDLRenderer, PieceTextures[LastMove.Pc], nullptr, &rect);
 	}
 }
 
@@ -135,7 +169,7 @@ void Renderer::RenderPromote(const bool isWhite, const uint8_t col)
 	{
 		for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
 		{
-			SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &r2);
+			SDL_RenderTexture(pSDLRenderer, PieceTextures[pc], nullptr, &r2);
 			r2.y += r2.w;
 		}
 	}
@@ -143,18 +177,29 @@ void Renderer::RenderPromote(const bool isWhite, const uint8_t col)
 	{
 		for (int pc = B_QUEEN; pc >= B_KNIGHT; --pc)
 		{
-			SDL_RenderTexture(pSDLRenderer, pieceTextures[pc], nullptr, &r2);
+			SDL_RenderTexture(pSDLRenderer, PieceTextures[pc], nullptr, &r2);
 			r2.y += r2.w;
 		}		
 	}
 }
 
-void Renderer::RenderWin(const bool isWhite)
+void Renderer::RenderGameEnd(const GameState gameState)
 {
+	SDL_Texture* t;
+	if (gameState == STALEMATE)
+	{
+		SDL_SetRenderDrawColor(pSDLRenderer, 0, 0, 0, 80);
+		t = StalemateTexture;
+	}
+	else if (gameState == W_WIN or gameState == B_WIN)
+	{
+		const bool isWhite = gameState == W_WIN;
+		isWhite ? SDL_SetRenderDrawColor(pSDLRenderer, 0, 0, 0, 80) : SDL_SetRenderDrawColor(pSDLRenderer, 255, 255, 255, 80);
+		t = WinTextures[static_cast<int>(isWhite)];
+	}
+	else return;
 	SDL_FRect r {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-	isWhite ? SDL_SetRenderDrawColor(pSDLRenderer, 0, 0, 0, 80) : SDL_SetRenderDrawColor(pSDLRenderer, 255, 255, 255, 80);
-	SDL_RenderFillRect(pSDLRenderer, &r);	
-	SDL_Texture* t = winTextures[static_cast<int>(isWhite)];
+	SDL_RenderFillRect(pSDLRenderer, &r);
 	r.w = BoardSize * 0.7f;
 	r.h = r.w * (static_cast<float>(t->h) / t->w);
 	r.x = BoardX + (BoardSize-r.w) / 2.f;
@@ -164,22 +209,23 @@ void Renderer::RenderWin(const bool isWhite)
 
 void Renderer::loadAllTextures()
 {
-	pieceTextures[W_PAWN] = LoadTexture("resources/w-pawn.png", pSDLRenderer);
-	pieceTextures[W_KNIGHT] = LoadTexture("resources/w-knight.png", pSDLRenderer);
-	pieceTextures[W_BISHOP] = LoadTexture("resources/w-bishop.png", pSDLRenderer);
-	pieceTextures[W_ROOK] = LoadTexture("resources/w-rook.png", pSDLRenderer);
-	pieceTextures[W_QUEEN] = LoadTexture("resources/w-queen.png", pSDLRenderer);
-	pieceTextures[W_KING] = LoadTexture("resources/w-king.png", pSDLRenderer);
+	PieceTextures[W_PAWN] = LoadTexture("resources/w-pawn.png", pSDLRenderer);
+	PieceTextures[W_KNIGHT] = LoadTexture("resources/w-knight.png", pSDLRenderer);
+	PieceTextures[W_BISHOP] = LoadTexture("resources/w-bishop.png", pSDLRenderer);
+	PieceTextures[W_ROOK] = LoadTexture("resources/w-rook.png", pSDLRenderer);
+	PieceTextures[W_QUEEN] = LoadTexture("resources/w-queen.png", pSDLRenderer);
+	PieceTextures[W_KING] = LoadTexture("resources/w-king.png", pSDLRenderer);
 
-	pieceTextures[B_PAWN] = LoadTexture("resources/b-pawn.png", pSDLRenderer);
-	pieceTextures[B_KNIGHT] = LoadTexture("resources/b-knight.png", pSDLRenderer);
-	pieceTextures[B_BISHOP] = LoadTexture("resources/b-bishop.png", pSDLRenderer);
-	pieceTextures[B_ROOK] = LoadTexture("resources/b-rook.png", pSDLRenderer);
-	pieceTextures[B_QUEEN] = LoadTexture("resources/b-queen.png", pSDLRenderer);
-	pieceTextures[B_KING] = LoadTexture("resources/b-king.png", pSDLRenderer);
+	PieceTextures[B_PAWN] = LoadTexture("resources/b-pawn.png", pSDLRenderer);
+	PieceTextures[B_KNIGHT] = LoadTexture("resources/b-knight.png", pSDLRenderer);
+	PieceTextures[B_BISHOP] = LoadTexture("resources/b-bishop.png", pSDLRenderer);
+	PieceTextures[B_ROOK] = LoadTexture("resources/b-rook.png", pSDLRenderer);
+	PieceTextures[B_QUEEN] = LoadTexture("resources/b-queen.png", pSDLRenderer);
+	PieceTextures[B_KING] = LoadTexture("resources/b-king.png", pSDLRenderer);
 
-	winTextures[0] = LoadTexture("resources/win_black.png", pSDLRenderer);
-	winTextures[1] = LoadTexture("resources/win_white.png", pSDLRenderer);
+	WinTextures[0] = LoadTexture("resources/win_black.png", pSDLRenderer);
+	WinTextures[1] = LoadTexture("resources/win_white.png", pSDLRenderer);
+	StalemateTexture = LoadTexture("resources/stalemate.png", pSDLRenderer);
 }
 
 void Renderer::UpdateFPS()
@@ -252,7 +298,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-	ClearPiecesTextures();
+	ClearAllTextures();
 	// TTF_DestroyText(textHodiny);
 	// TTF_DestroyFont(font);
 	TTF_DestroySurfaceTextEngine(pTextEngine);

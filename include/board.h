@@ -39,6 +39,8 @@ struct MoveData {
     uint8_t To;
     bool IsWhite;
     int Pc;
+
+    bool operator==(const MoveData& other) const = default;
 };
 
 struct BoardState {

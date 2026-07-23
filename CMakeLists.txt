@@ -10,7 +10,7 @@ endif()
 
 project ("chess" CXX)
 
-# set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 
 # Odsud dál pokračuje tvůj kód...
 find_package(SDL3 REQUIRED)
