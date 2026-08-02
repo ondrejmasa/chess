@@ -1,6 +1,6 @@
 #include "minimax.h"
 
-int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite)
+int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite, int alpha, int beta)
  {
     if (gamestate == W_WIN)
         return 9999999 + depth;
@@ -12,7 +12,14 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
     }
     int bestVal = isWhite ? -99999998 : 99999998;
 
-    const std::vector<MoveData>& moves = board.GetAllMovesFromTo(isWhite); 
+    std::vector<MoveData> moves = board.GetAllMovesFromTo(isWhite); 
+
+    std::sort(moves.begin(), moves.end(), [board](const MoveData& a, const MoveData& b) {
+        int valA = board.GetScoreMove(a);
+        int valB = board.GetScoreMove(b);
+        return valA > valB;
+    });
+
     for (const MoveData& m : moves)
     {
         int val;
@@ -21,36 +28,63 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
         if (gs == W_PROMOTE)
         {
             board.UndoMove();
-
+            bool stop = false;
             for (int pc = W_KNIGHT; pc <= W_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
                 bestVal = std::max(bestVal, val); 
                 board.UndoMove();
+                alpha = std::max(alpha, val);
+                if (beta <= alpha)
+                {
+                    stop = true;
+                    break;
+                }
             }
+            if (stop) break;
         } 
         else if (gs == B_PROMOTE)
         {
             board.UndoMove();
 
+            bool stop = false;
             for (int pc = B_KNIGHT; pc <= B_QUEEN; ++pc)
             {
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
                 bestVal = std::min(bestVal, val); 
                 board.UndoMove();
+                beta = std::min(beta, val);
+                if (beta <= alpha)
+                {
+                    stop = true;
+                    break;
+                }
             }
+            if (stop) break;
         }   
         else 
         {
-            val = Minimax(board, gs, depth-1, not isWhite);   
+            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta);   
             board.UndoMove();
-            bestVal = isWhite ? std::max(bestVal, val) : std::min(bestVal, val); 
+            if (isWhite)
+            {
+                bestVal = std::max(bestVal, val);
+                alpha = std::max(alpha, val);     
+            }
+            else
+            {
+                bestVal = std::min(bestVal, val);
+                beta = std::min(beta, val);
+
+            }
+            if (beta <= alpha) break;
+           
         }
     }
     return bestVal;
@@ -62,6 +96,8 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
     std::vector<MoveData> moves = board.GetAllMovesFromTo(isWhite);    
     MinimaxMove move;
     int bestVal = isWhite ? -99999998 : 99999998;
+    int alpha = INT_MIN;
+    int beta = INT_MAX;
 
     if (!moves.empty())
     {
@@ -70,6 +106,12 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
         move.Eval = bestVal;
         move.PromotePc = NONE;
     }
+    
+    std::sort(moves.begin(), moves.end(), [board](const MoveData& a, const MoveData& b) {
+        int valA = board.GetScoreMove(a);
+        int valB = board.GetScoreMove(b);
+        return valA > valB;
+    });
 
     for (const MoveData& m : moves)
     {
@@ -85,7 +127,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
                 board.UndoMove();
                 if (val > bestVal)
                 {
@@ -95,6 +137,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                     move.Eval = bestVal;
                     move.PromotePc = (PieceTypeAndColor)pc;
                 }
+                alpha = std::max(alpha, val);
             }
         } 
         else if (gs == B_PROMOTE)
@@ -106,7 +149,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
                 board.UndoMove();
                 if (val < bestVal)
                 {
@@ -116,27 +159,36 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                     move.Eval = bestVal;
                     move.PromotePc = (PieceTypeAndColor)pc;
                 }  
+                beta = std::min(beta, val);
             }
         }   
         else 
         {
-            val = Minimax(board, gs, depth-1, not isWhite);   
+            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta);   
             board.UndoMove();
-            if (isWhite and val > bestVal)
+            if (isWhite)
             {
-                bestVal = val;
-                move.From = m.From;
-                move.To = m.To;
-                move.Eval = bestVal;
-                move.PromotePc = NONE;
+                alpha = std::max(alpha, val);
+                if (val > bestVal)
+                {
+                    bestVal = val;
+                    move.From = m.From;
+                    move.To = m.To;
+                    move.Eval = bestVal;
+                    move.PromotePc = NONE;
+                }
             }
-            else if (not isWhite and val < bestVal)
+            else
             {
-                bestVal = val;
-                move.From = m.From;
-                move.To = m.To;
-                move.Eval = bestVal;
-                move.PromotePc = NONE;
+                beta = std::min(beta, val);
+                if (val < bestVal)
+                {
+                    bestVal = val;
+                    move.From = m.From;
+                    move.To = m.To;
+                    move.Eval = bestVal;
+                    move.PromotePc = NONE;
+                }
             }
         }
     }

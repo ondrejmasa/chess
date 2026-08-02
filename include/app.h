@@ -25,8 +25,8 @@ private:
 	void Render();
 public:
 	App() : mPlayers{
-		std::make_unique<User>(mRenderer, false),    
-		std::make_unique<Computer>(mRenderer, true) 
+		std::make_unique<Computer>(mRenderer, false),   // black
+		std::make_unique<User>(mRenderer, true) 	 	// white
 	} {};
 	virtual ~App();
 	void Run();

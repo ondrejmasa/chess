@@ -1196,9 +1196,51 @@ std::vector<MoveData> Board::GetAllBlackMovesFromTo() const
 	return moves;	
 }
 
+int Board::GetEvalSiglePc(PieceTypeAndColor pc) const
+{
+    constexpr int pVal = 100;
+	constexpr int nVal = 320;
+	constexpr int bVal = 330;
+	constexpr int rVal = 500;
+	constexpr int qVal = 900;
+	constexpr int kVal = 20000;
+	switch (pc)
+	{
+		case W_PAWN:
+		case B_PAWN:
+			return pVal;
+		case W_KNIGHT:
+		case B_KNIGHT:
+			return nVal;
+		case W_BISHOP:
+		case B_BISHOP:
+			return bVal;
+		case W_ROOK:
+		case B_ROOK:
+			return rVal;
+		case W_QUEEN:
+		case B_QUEEN:
+			return qVal;
+		case W_KING:
+		case B_KING:
+			return kVal;
+		case NONE:
+			return 0;
+	}
+}
+
 int Board::GetEvaluation() const
 {
 	return GetEvaluationByColor(true) - GetEvaluationByColor(false);
+}
+
+int Board::GetScoreMove(const MoveData& move) const
+{
+	PieceTypeAndColor attackerPc = (PieceTypeAndColor)GetPieceAtIdx(move.From);
+    int attackerVal = GetEvalSiglePc(attackerPc);
+	PieceTypeAndColor victimPc = (PieceTypeAndColor)GetPieceAtIdx(move.To);
+	int victimVal = GetEvalSiglePc(victimPc);
+	return victimVal * 10 - attackerVal;
 }
 
 Board::Board()

@@ -2,6 +2,7 @@
 #include "minimax.h"
 #include "renderer.h"
 #include <SDL3/SDL.h>
+#include <future>
 
 class Player {
 protected:
@@ -22,7 +23,10 @@ public:
 
 class Computer: public Player {
 private:
-    const int Depth = 4;
+    const int Depth = 5;
+    bool IsComputing = false;
+    std::future<MinimaxMove> MoveFuture;
+    Board ThreadBoard;
 public:
     using Player::Player;
     MinimaxMove GenerateMove(Board& board);

@@ -108,6 +108,20 @@ void Renderer::RenderBoard(const Board &board)
 	for (auto i = 7; i >= 0; --i) {
 		for (auto j = 0; j < 8; ++j) {
 			auto idx = i * 8 + j;
+			// last move
+			if (LastMove.From == idx)
+			{
+				rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
+				SDL_SetRenderDrawColor(pSDLRenderer, 160, 150, 150, 120);
+				SDL_RenderFillRect(pSDLRenderer, &rect);
+			}
+			else if (LastMove.To == idx)
+			{
+				rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
+				SDL_SetRenderDrawColor(pSDLRenderer, 110, 100, 100, 135);
+				SDL_RenderFillRect(pSDLRenderer, &rect);
+			}
+
 			// active moves
 			if (ActiveMoves >> idx & 1ULL)
 			{

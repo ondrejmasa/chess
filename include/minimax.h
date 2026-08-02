@@ -1,5 +1,7 @@
 #pragma once
 #include "board.h"
+#include <climits>
+#include <algorithm>
 
 struct MinimaxMove {
     int8_t From;

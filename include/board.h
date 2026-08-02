@@ -60,10 +60,10 @@ struct BoardState {
 
 class Board {
 private:
-    const BitBoard NotAFile = 0xFEFEFEFEFEFEFEFEULL;
-    const BitBoard NotABFile = 0xFCFCFCFCFCFCFCFCULL;
-    const BitBoard NotHFile = 0x7F7F7F7F7F7F7F7FULL;
-    const BitBoard NotGHFile = 0x3F3F3F3F3F3F3F3FULL;
+    static constexpr BitBoard NotAFile = 0xFEFEFEFEFEFEFEFEULL;
+    static constexpr BitBoard NotABFile = 0xFCFCFCFCFCFCFCFCULL;
+    static constexpr BitBoard NotHFile = 0x7F7F7F7F7F7F7F7FULL;
+    static constexpr BitBoard NotGHFile = 0x3F3F3F3F3F3F3F3FULL;
     BitBoard WhiteEnPassant = 0ULL;
     BitBoard BlackEnPassant = 0ULL;
     BitBoard WhiteCheckers = 0ULL;
@@ -77,7 +77,7 @@ private:
     std::array<BitBoard, 64> KnightMoves;
     std::array<BitBoard, 64> KingMoves;
     std::array<std::array<BitBoard, 64>, 64> RayFromTo;
-    MoveData LastMove;
+    MoveData LastMove {255, 255, false, -1};
     std::vector<BoardState> BoardHistory;
     void InitRayFromTo();
 	void InitBoard();
@@ -108,6 +108,7 @@ private:
     int GetEvaluationByColor(const bool isWhite) const;
     std::vector<MoveData> GetAllWhiteMovesFromTo() const;
     std::vector<MoveData> GetAllBlackMovesFromTo() const;
+    int GetEvalSiglePc(PieceTypeAndColor pc) const;
 public:
     std::array<BitBoard, 12> PieceBB;
     BitBoard WhiteBB;
@@ -126,5 +127,6 @@ public:
     void Restart();
     std::vector<MoveData> GetAllMovesFromTo(const bool isWhite) const;
     int GetEvaluation() const;
+    int GetScoreMove(const MoveData& move) const;
     Board();
 };

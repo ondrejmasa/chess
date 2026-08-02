@@ -47,5 +47,21 @@ MinimaxMove User::GenerateMove(Board &board)
 
 MinimaxMove Computer::GenerateMove(Board &board)
 {
-    return GetBestMove(board, Depth, IsWhite);
+    if (IsComputing)
+    {
+        if (MoveFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        {
+            IsComputing = false;
+            return MoveFuture.get();
+        }
+        else
+        {
+            return {-1, -1, -1, NONE};
+        }
+    }
+
+    IsComputing = true;
+    ThreadBoard = board;
+    MoveFuture = std::async(std::launch::async, GetBestMove, std::ref(ThreadBoard), Depth, IsWhite);
+    return {-1, -1, -1, NONE};
 }
