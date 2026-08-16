@@ -525,6 +525,7 @@ bool Board::CanWhiteCastleRight() const
 {
     if (WhiteCastle.KingMoved or WhiteCastle.RightRookMoved) return false;
 	if (((OccupiedBB >> F1) & 1ULL) or ((OccupiedBB >> G1) & 1ULL)) return false;
+	if (((BlackAttacks >> F1) & 1ULL) or ((BlackAttacks >> G1) & 1ULL)) return false;
 	return true;
 }
 
@@ -532,6 +533,7 @@ bool Board::CanWhiteCastleLeft() const
 {
     if (WhiteCastle.KingMoved or WhiteCastle.LeftRookMoved) return false;
 	if (((OccupiedBB >> B1) & 1ULL) or ((OccupiedBB >> C1) & 1ULL) or ((OccupiedBB >> D1) & 1ULL)) return false;
+	if (((BlackAttacks >> B1) & 1ULL) or ((BlackAttacks >> C1) & 1ULL) or ((BlackAttacks >> D1) & 1ULL)) return false;
 	return true;
 }
 
@@ -539,6 +541,7 @@ bool Board::CanBlackCastleRight() const
 {
     if (BlackCastle.KingMoved or BlackCastle.RightRookMoved) return false;
 	if (((OccupiedBB >> F8) & 1ULL) or ((OccupiedBB >> G8) & 1ULL)) return false;
+	if (((WhiteAttacks >> F8) & 1ULL) or ((WhiteAttacks >> G8) & 1ULL)) return false;
 	return true;
 }
 
@@ -546,6 +549,7 @@ bool Board::CanBlackCastleLeft() const
 {
     if (BlackCastle.KingMoved or BlackCastle.LeftRookMoved) return false;
 	if (((OccupiedBB >> B8) & 1ULL) or ((OccupiedBB >> C8) & 1ULL) or ((OccupiedBB >> D8) & 1ULL)) return false;
+	if (((WhiteAttacks >> B8) & 1ULL) or ((WhiteAttacks >> C8) & 1ULL) or ((WhiteAttacks >> D8) & 1ULL)) return false;
 	return true;
 }
 
@@ -907,6 +911,7 @@ void Board::Move(const uint8_t from, const uint8_t to)
 	state.BlackCastle    = BlackCastle;
 	state.Move       	 = LastMove; 
 	state.capturedPiece  = (PieceTypeAndColor)pc2;
+	state.PieceBB 		 = PieceBB;
 	BoardHistory.push_back(state);
 }
 
@@ -1057,6 +1062,7 @@ GameState Board::UpdateAfterMove()
 	BitBoard whiteMoves = GetAllWhiteMoves();
 	BitBoard blackMoves = GetAllBlackMoves();
 
+
 	if (pc == W_PAWN and to >= A8)
 	{
 		return W_PROMOTE;
@@ -1086,6 +1092,10 @@ GameState Board::UpdateAfterMove()
 		{
 			return W_WIN;
 		}
+	}
+	if (CheckMoveRepetition())
+	{
+		return STALEMATE;
 	}
 	return GAME;
 }
@@ -1150,6 +1160,7 @@ void Board::Restart()
     BlackPins = 0ULL;
     WhiteCastle.Restart();
     BlackCastle.Restart();
+	LastMove.Restart();
 	InitBoard();
 }
 
@@ -1227,6 +1238,28 @@ int Board::GetEvalSiglePc(PieceTypeAndColor pc) const
 		case NONE:
 			return 0;
 	}
+}
+
+bool Board::CheckMoveRepetition() const
+{
+	uint8_t count{ 0 };
+    for (int i = BoardHistory.size() -1; i >= 0; i--)
+	{
+		const BoardState& state = BoardHistory[i];
+		if (state.capturedPiece != NONE || state.Move.Pc == W_PAWN || state.Move.Pc == B_PAWN)
+			break;
+		if (PieceBB == state.PieceBB and
+            WhiteCastle == state.WhiteCastle and
+            BlackCastle == state.BlackCastle and
+            WhiteEnPassant == state.WhiteEnPassant and
+            BlackEnPassant == state.BlackEnPassant)
+		{
+			count++;	
+		}
+		if (count == 3u)
+			return true;
+	}
+	return false;
 }
 
 int Board::GetEvaluation() const

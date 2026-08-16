@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <cmath>
 #include "global.h"
 #include "board.h"
 #include "fpsCounter.h"
@@ -20,42 +21,16 @@ struct BoardSettings
 
 class Animator {
 private:
-	const Uint64 ANIMATION_TIME = 100;
+	const Uint64 ANIMATION_TIME = 180;
 	Uint64 StartTime;
 	float FromX;
 	float FromY;
 	float ToX;
 	float ToY;
 public:
-	void StartAnimation(const float fromX, const float fromY,const float toX,const float toY)
-	{
-		StartTime = SDL_GetTicks();
-		FromX = fromX;
-		FromY = fromY;
-		ToX = toX;
-		ToY = toY;
-	};
-
-	void GetActualPos(float& x, float& y)
-	{
-		Uint64 actTime = SDL_GetTicks();
-		Uint64 elapsedTime = actTime - StartTime;
-		if (elapsedTime > ANIMATION_TIME)
-		{
-			x = ToX;
-			y = ToY;
-			return;
-		}	
-
-		float t = static_cast<float>(elapsedTime) / static_cast<float>(ANIMATION_TIME);
-		x = FromX + t * (ToX - FromX);
-		y = FromY + t * (ToY - FromY);
-	};
-
-	bool isFinished() 
-	{
-		return SDL_GetTicks() - StartTime > ANIMATION_TIME;
-	}
+	void StartAnimation(const float fromX, const float fromY,const float toX,const float toY);
+	void GetActualPos(float& x, float& y);
+	bool isFinished();
 };
 
 

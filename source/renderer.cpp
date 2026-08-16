@@ -111,14 +111,18 @@ void Renderer::RenderBoard(const Board &board)
 			// last move
 			if (LastMove.From == idx)
 			{
-				rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
-				SDL_SetRenderDrawColor(pSDLRenderer, 160, 150, 150, 120);
+				float sz = cellSize * 0.90f;
+				float o = (cellSize - sz) / 2;
+				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				SDL_SetRenderDrawColor(pSDLRenderer, 255, 237, 189, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
 			else if (LastMove.To == idx)
 			{
-				rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
-				SDL_SetRenderDrawColor(pSDLRenderer, 110, 100, 100, 135);
+				float sz = cellSize * 0.90f;
+				float o = (cellSize - sz) / 2;
+				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				SDL_SetRenderDrawColor(pSDLRenderer, 255, 203, 166, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
 
@@ -255,6 +259,7 @@ void Renderer::Restart()
 {
 	ActiveIdx = -1;
 	ActiveMoves = 0ULL;
+	LastMove.Restart();
 }
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
@@ -320,4 +325,29 @@ Renderer::~Renderer()
 	SDL_DestroyRenderer(pSDLRenderer);
 	SDL_DestroyWindow(pWindow);
 	SDL_Quit();
+}
+
+void Animator::StartAnimation(const float fromX, const float fromY, const float toX, const float toY)
+{
+	StartTime = SDL_GetTicks();
+	FromX = fromX;
+	FromY = fromY;
+	ToX = toX;
+	ToY = toY;
+}
+
+void Animator::GetActualPos(float &x, float &y)
+{
+	Uint64 actTime = SDL_GetTicks();
+	Uint64 elapsedTime = actTime - StartTime;
+
+	double t = std::min(static_cast<double>(elapsedTime) / static_cast<double>(ANIMATION_TIME), 1.0);
+	t = 1.0 - pow(1.0-t, 3.0);
+	x = FromX + t * (ToX - FromX);
+	y = FromY + t * (ToY - FromY);
+}
+
+bool Animator::isFinished()
+{
+	return SDL_GetTicks() - StartTime > ANIMATION_TIME;
 }

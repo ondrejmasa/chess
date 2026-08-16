@@ -32,6 +32,7 @@ struct Castle {
         LeftRookMoved = false;
         RightRookMoved = false;
     }
+    bool operator==(const Castle& other) const = default;
 };
 
 struct MoveData {
@@ -39,7 +40,12 @@ struct MoveData {
     uint8_t To;
     bool IsWhite;
     int Pc;
-
+    void Restart() {
+        From = 255u;
+        To = 255u;
+        IsWhite = false;
+        Pc = NONE;
+    }
     bool operator==(const MoveData& other) const = default;
 };
 
@@ -56,6 +62,7 @@ struct BoardState {
     Castle BlackCastle;
     MoveData Move;
     PieceTypeAndColor capturedPiece;
+    std::array<BitBoard, 12> PieceBB;
 };
 
 class Board {
@@ -109,6 +116,7 @@ private:
     std::vector<MoveData> GetAllWhiteMovesFromTo() const;
     std::vector<MoveData> GetAllBlackMovesFromTo() const;
     int GetEvalSiglePc(PieceTypeAndColor pc) const;
+    bool CheckMoveRepetition() const;
 public:
     std::array<BitBoard, 12> PieceBB;
     BitBoard WhiteBB;
