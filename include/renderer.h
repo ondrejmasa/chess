@@ -53,6 +53,7 @@ private:
 	MoveData LastMove;
 	Animator mAnimator;
 	SDL_Texture* LoadTexture(const std::string& path, SDL_Renderer* renderer);
+	bool IsRotated = false;
 	void ClearAllTextures();
 	void RenderBoard(const Board& board);
 	void RenderPromote(const bool isWhite, const uint8_t col);

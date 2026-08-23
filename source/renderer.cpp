@@ -72,14 +72,15 @@ void Renderer::Render(const Board &board, const GameState gameState)
 void Renderer::RenderBoard(const Board &board)
 {
 	const float cellSize = BoardSize / 8.f;
+	const auto ro = IsRotated ? 7 : 0;
 
 	const MoveData& lm = board.GetLastMove();
 	if (lm != LastMove)
 	{
-		uint8_t fr = lm.From / 8;	
-		uint8_t fc = lm.From % 8;	
-		uint8_t tr = lm.To / 8;	
-		uint8_t tc = lm.To % 8;
+		uint8_t fr = std::abs(ro - lm.From / 8);	
+		uint8_t fc = std::abs(ro - lm.From % 8);	
+		uint8_t tr = std::abs(ro - lm.To / 8);	
+		uint8_t tc = std::abs(ro - lm.To % 8);
 
 		float fx = BoardX + fc * cellSize;
 		float fy = BoardY + (7 - fr) * cellSize;
@@ -99,21 +100,25 @@ void Renderer::RenderBoard(const Board &board)
 	// dark squares
 	SDL_SetRenderDrawColor(pSDLRenderer, 163, 82, 78, 255);
 	for (auto i = 0; i < 8; ++i) {
+		auto i_rot = std::abs(ro-i);
 		for (auto j = 1 - (i % 2); j < 8; j += 2) {
-			rect = { BoardX + j * cellSize, BoardY + i * cellSize, cellSize, cellSize };
+			auto j_rot = std::abs(ro-j);
+			rect = { BoardX + j_rot * cellSize, BoardY + i_rot * cellSize, cellSize, cellSize };
 			SDL_RenderFillRect(pSDLRenderer, &rect);
 		}
 	}
 
 	for (auto i = 7; i >= 0; --i) {
+		auto i_rot = std::abs(ro-i);
 		for (auto j = 0; j < 8; ++j) {
 			auto idx = i * 8 + j;
+			auto j_rot = std::abs(ro-j);
 			// last move
 			if (LastMove.From == idx)
 			{
 				float sz = cellSize * 0.90f;
 				float o = (cellSize - sz) / 2;
-				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
 				SDL_SetRenderDrawColor(pSDLRenderer, 255, 237, 189, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
@@ -121,7 +126,7 @@ void Renderer::RenderBoard(const Board &board)
 			{
 				float sz = cellSize * 0.90f;
 				float o = (cellSize - sz) / 2;
-				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
 				SDL_SetRenderDrawColor(pSDLRenderer, 255, 203, 166, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
@@ -131,7 +136,7 @@ void Renderer::RenderBoard(const Board &board)
 			{
 				float sz = cellSize * 0.75f;
 				float o = (cellSize - sz) / 2;
-				rect = { BoardX + j * cellSize + o, BoardY + (7 - i) * cellSize + o, sz, sz };
+				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
 				SDL_SetRenderDrawColor(pSDLRenderer, 150, 150, 150, 100);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
@@ -140,7 +145,7 @@ void Renderer::RenderBoard(const Board &board)
 			{
 				if ((board.PieceBB[pc] >> idx) & 1ULL)
 				{
-					rect = { BoardX + j * cellSize, BoardY + (7-i) * cellSize, cellSize, cellSize };
+					rect = { BoardX + j_rot * cellSize, BoardY + (7-i_rot) * cellSize, cellSize, cellSize };
 					if (ActiveIdx == idx)
 					{
 						SDL_SetRenderDrawColor(pSDLRenderer, 163, 120, 71, 255);
@@ -166,11 +171,12 @@ void Renderer::RenderBoard(const Board &board)
 
 void Renderer::RenderPromote(const bool isWhite, const uint8_t col)
 {
+	const auto ro = IsRotated ? 7 : 0;
 	SDL_FRect& r = PromoteRect;
 	r.w = BoardSize / 8.f;
 	r.h = r.w*4.f;
-	r.x = BoardX+r.w*col;
-	r.y = isWhite ? BoardY : BoardY + BoardSize - r.h; 
+	r.x = BoardX+r.w*std::abs(ro-col);
+	r.y = (isWhite != IsRotated) ? BoardY : BoardY + BoardSize - r.h; 
 	SDL_SetRenderDrawColor(pSDLRenderer, 20, 20, 20, 255);
 	SDL_RenderFillRect(pSDLRenderer, &r);
 	SDL_FRect r2 = r;
@@ -266,13 +272,14 @@ int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
 {
 	const float x = posX - BoardX;
 	const float y = posY - BoardY;
-	if (x >= BoardSize || x < 0 || y >= BoardSize || y < 0)
+	if (x >= BoardSize or x < 0 or y >= BoardSize or y < 0)
 	{
 		return -1;
 	}
 	const float cellSize = BoardSize / 8.f;
-	const int8_t row = y / cellSize;
-	const int8_t col = x / cellSize;
+	const auto ro = IsRotated ? 7 : 0;
+	const int8_t row = std::abs(ro - int(y / cellSize));
+	const int8_t col = std::abs(ro - int(x / cellSize));
 	const int8_t idx = (7-row) * 8 + col;
 	return idx;
 }
