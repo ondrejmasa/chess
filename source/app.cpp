@@ -86,6 +86,11 @@ void App::Run()
 					}
 				}
 			}
+
+			else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+			{
+				mRenderer.ChangeScreenSize(event.window.data1, event.window.data2);
+			}
 		}
 		Update();
 		Render();

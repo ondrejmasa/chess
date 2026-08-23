@@ -36,8 +36,8 @@ public:
 
 class Renderer {
 private:
-	const int SCREEN_WIDTH = 800;
-	const int SCREEN_HEIGHT = 800;
+	int ScreenWidth = 800;
+	int ScreenHeight = 800;
 	SDL_Window* pWindow;
 	SDL_Renderer* pSDLRenderer;
 	TTF_TextEngine* pTextEngine;
@@ -45,7 +45,7 @@ private:
 	BoardSettings mBoardSettings;
 	float BoardX = mBoardSettings.OffsetLeft;
 	float BoardY = mBoardSettings.OffsetTop;
-	float BoardSize = std::min(SCREEN_WIDTH - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, SCREEN_HEIGHT - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
+	float BoardSize = std::min(ScreenWidth - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, ScreenHeight - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
 	std::array<SDL_Texture*, 12> PieceTextures;
 	std::array<SDL_Texture*, 2> WinTextures;
 	SDL_Texture* StalemateTexture;
@@ -67,6 +67,7 @@ public:
 	void loadAllTextures();
 	void UpdateFPS();
 	void Restart();
+	void ChangeScreenSize(const int width, const int height);
 	int8_t GetIdxAtPosition(const float posX, const float posY) const;
 	PieceTypeAndColor GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const;
 	Renderer();

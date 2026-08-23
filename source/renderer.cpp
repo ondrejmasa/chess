@@ -39,7 +39,7 @@ void Renderer::InitTTF()
 void Renderer::InitSDL()
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer("", SCREEN_WIDTH, SCREEN_HEIGHT, 0, &pWindow, &pSDLRenderer);
+	SDL_CreateWindowAndRenderer("", ScreenWidth, ScreenHeight, SDL_WINDOW_RESIZABLE, &pWindow, &pSDLRenderer);
 	SDL_SetRenderVSync(pSDLRenderer, 1);
 }
 
@@ -222,7 +222,7 @@ void Renderer::RenderGameEnd(const GameState gameState)
 		t = WinTextures[static_cast<int>(isWhite)];
 	}
 	else return;
-	SDL_FRect r {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+	SDL_FRect r {0, 0, ScreenWidth, ScreenHeight};
 	SDL_RenderFillRect(pSDLRenderer, &r);
 	r.w = BoardSize * 0.7f;
 	r.h = r.w * (static_cast<float>(t->h) / t->w);
@@ -266,6 +266,14 @@ void Renderer::Restart()
 	ActiveIdx = -1;
 	ActiveMoves = 0ULL;
 	LastMove.Restart();
+}
+
+void Renderer::ChangeScreenSize(const int width, const int height)
+{
+	
+	ScreenWidth = width;
+	ScreenHeight = height;
+	BoardSize = std::min(ScreenWidth - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, ScreenHeight - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
 }
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
