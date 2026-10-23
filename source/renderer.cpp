@@ -33,7 +33,15 @@ void Renderer::ClearAllTextures()
 
 void Renderer::InitTTF()
 {
-	pTextEngine = TTF_CreateRendererTextEngine(pSDLRenderer);
+	if (!TTF_Init()) {
+        std::cerr << "TTF_Init ERROR: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    pTextEngine = TTF_CreateRendererTextEngine(pSDLRenderer);
+    if (!pTextEngine) {
+        std::cerr << "TextEngine ERROR: " << SDL_GetError() << std::endl;
+    }
 }
 
 void Renderer::InitSDL()
@@ -66,6 +74,68 @@ void Renderer::Render(const Board &board, const GameState gameState)
 			RenderGameEnd(gameState);	
 			break;
 	}
+	SDL_RenderPresent(pSDLRenderer);
+}
+
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <iostream>
+
+void Renderer::RenderMenu()
+{
+
+	// TEMPORARY
+
+	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
+	SDL_RenderClear(pSDLRenderer);
+
+    if (!pFont) {
+        // std::cerr << "Font není načten!" << std::endl;
+        return;
+    }
+
+    // Barva v SDL3 (RGBA float hodnoty 0.0f až 1.0f)
+    SDL_Color textColor = { 255, 255, 255, 255 }; 
+
+    const char* menuText = "Left Click: Player vs Player | Right Click: Player vs Bot";
+
+    // 1. Vytvoření Surface (délka 0 = null-terminated string)
+    SDL_Surface* textSurface = TTF_RenderText_Blended(pFont, menuText, 0, textColor);
+    if (!textSurface) {
+        std::cerr << "Chyba při vytváření surface: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    // 2. Převod Surface na Texturu pro mRenderer (v SDL3 předáváte mRenderer a surface)
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(pSDLRenderer, textSurface);
+    
+    // Surface po převedení na texturu ihned uvolníme
+    SDL_DestroySurface(textSurface); // V SDL3 je to SDL_DestroySurface (místo SDL_FreeSurface)
+
+    if (!textTexture) {
+        std::cerr << "Chyba při vytváření textury: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    // 3. Zjištění rozměrů textury v SDL3
+    float textWidth = 0.0f;
+    float textHeight = 0.0f;
+    SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
+
+    // 4. Nastavení pozice pomocí floatů (SDL_FRect)
+    SDL_FRect renderQuad;
+    renderQuad.x = (static_cast<float>(ScreenWidth) - textWidth) / 2.0f;
+    renderQuad.y = (static_cast<float>(ScreenHeight) - textHeight) / 2.0f;
+    renderQuad.w = textWidth;
+    renderQuad.h = textHeight;
+
+    // 5. Vykreslení do SDL3 Rendereru
+    SDL_RenderTexture(pSDLRenderer, textTexture, nullptr, &renderQuad);
+
+    // 6. Úklid textury
+    SDL_DestroyTexture(textTexture);
+
 	SDL_RenderPresent(pSDLRenderer);
 }
 
@@ -327,15 +397,21 @@ Renderer::Renderer()
 {
 	InitSDL();
 	InitTTF();
+	pFont = TTF_OpenFont("resources/Coolvetica.otf", 20);
+	if (!pFont) {
+		std::cout << "Chyba při načítání fontu: " << SDL_GetError() << std::endl;
+	}
 	loadAllTextures();
 }
 
 Renderer::~Renderer()
 {
 	ClearAllTextures();
-	// TTF_DestroyText(textHodiny);
-	// TTF_DestroyFont(font);
 	TTF_DestroySurfaceTextEngine(pTextEngine);
+	if (pFont) {
+        TTF_CloseFont(pFont);
+        pFont = nullptr;
+    }
 	TTF_Quit();
 	SDL_DestroyRenderer(pSDLRenderer);
 	SDL_DestroyWindow(pWindow);

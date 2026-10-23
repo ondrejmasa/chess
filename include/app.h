@@ -11,23 +11,20 @@
 #include "minimax.h"
 #include "player.h"
 #include <memory>
+#include "sceneManager.h"
 
 class App {
 private:
 	Renderer mRenderer;
-	Board mBoard;
-	GameState mGameState = GAME;
-	std::array<std::unique_ptr<Player>, 2> mPlayers;
-	bool mIsWhiteTurn = true;
-	void HandleLeftClick(const SDL_Event& event);
-	void Restart();
+	SceneManager mSceneManager;
 	void Update();
 	void Render();
 public:
-	App() : mPlayers{
-		std::make_unique<User>(mRenderer, false),   // black
-		std::make_unique<User>(mRenderer, true) 	 	// white
-	} {};
+	App()
+		: mSceneManager {mRenderer}
+	{
+		mSceneManager.ChangeScene(SceneType::MENU, nullptr);	
+	};
 	virtual ~App();
 	void Run();
 };

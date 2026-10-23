@@ -26,7 +26,8 @@ add_executable (chess
     "include/global.h" 
     "source/board.cpp" "include/board.h"
     "include/minimax.h" "source/minimax.cpp"
-    "source/player.cpp" "include/player.h")
+    "source/player.cpp" "include/player.h"
+    source/sceneManager.cpp)
 
 # 3. Prolinkování knihoven (vcpkg používá moderní jmenné prostory s dvojtečkou)
 target_link_libraries(chess PRIVATE 

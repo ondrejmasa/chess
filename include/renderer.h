@@ -38,6 +38,7 @@ class Renderer {
 private:
 	int ScreenWidth = 800;
 	int ScreenHeight = 800;
+	TTF_Font* pFont = nullptr;
 	SDL_Window* pWindow;
 	SDL_Renderer* pSDLRenderer;
 	TTF_TextEngine* pTextEngine;
@@ -64,6 +65,7 @@ public:
 	uint8_t ActiveIdx = -1;
 	BitBoard ActiveMoves = 0ULL;
 	void Render(const Board& board, const GameState gameState);
+	void RenderMenu();
 	void loadAllTextures();
 	void UpdateFPS();
 	void Restart();

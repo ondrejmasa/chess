@@ -1,3 +1,4 @@
+#pragma once
 #include "board.h"
 #include "minimax.h"
 #include "renderer.h"
