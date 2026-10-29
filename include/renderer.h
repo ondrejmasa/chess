@@ -64,7 +64,10 @@ private:
 public:
 	uint8_t ActiveIdx = -1;
 	BitBoard ActiveMoves = 0ULL;
-	void Render(const Board& board, const GameState gameState);
+	void RenderGame(const Board& board, const GameState gameState);
+	void RenderClear();
+	void RenderPresent();
+	void RenderPause();
 	void RenderMenu();
 	void loadAllTextures();
 	void UpdateFPS();

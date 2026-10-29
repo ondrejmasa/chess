@@ -51,11 +51,9 @@ void Renderer::InitSDL()
 	SDL_SetRenderVSync(pSDLRenderer, 1);
 }
 
-void Renderer::Render(const Board &board, const GameState gameState)
+void Renderer::RenderGame(const Board &board, const GameState gameState)
 {
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
-	SDL_RenderClear(pSDLRenderer);
 
 	RenderBoard(board);	
 	switch (gameState)
@@ -74,7 +72,25 @@ void Renderer::Render(const Board &board, const GameState gameState)
 			RenderGameEnd(gameState);	
 			break;
 	}
+}
+
+void Renderer::RenderClear()
+{
+	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
+	SDL_RenderClear(pSDLRenderer);
+}
+
+void Renderer::RenderPresent()
+{
 	SDL_RenderPresent(pSDLRenderer);
+}
+
+void Renderer::RenderPause()
+{
+	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
+	SDL_FRect r {0, 0, ScreenWidth, ScreenHeight};
+	SDL_SetRenderDrawColor(pSDLRenderer, 0, 0, 0, 128);
+	SDL_RenderFillRect(pSDLRenderer, &r);
 }
 
 #include <SDL3/SDL.h>
@@ -87,8 +103,6 @@ void Renderer::RenderMenu()
 	// TEMPORARY
 
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(pSDLRenderer, 160, 160, 180, 255);
-	SDL_RenderClear(pSDLRenderer);
 
     if (!pFont) {
         // std::cerr << "Font není načten!" << std::endl;
@@ -135,8 +149,6 @@ void Renderer::RenderMenu()
 
     // 6. Úklid textury
     SDL_DestroyTexture(textTexture);
-
-	SDL_RenderPresent(pSDLRenderer);
 }
 
 void Renderer::RenderBoard(const Board &board)
