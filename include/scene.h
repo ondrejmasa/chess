@@ -55,6 +55,7 @@ private:
     std::shared_ptr<SelectableUIElement> mSelPersonBlack;
     std::shared_ptr<TextureUIElement> mWhiteFigTexture;
     std::shared_ptr<TextureUIElement> mBlackFigTexture;
+    std::shared_ptr<ButtonUIElement> mStartButton;
     std::vector<std::shared_ptr<UIElement>> mUIElements;
 public:
     using Scene::Scene;

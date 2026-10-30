@@ -2,6 +2,8 @@
 #include <functional>
 #include <SDL3/SDL.h>
 #include <SDL3_gfx/SDL3_gfxPrimitives.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <string>
 
 
 class UIElement {
@@ -46,4 +48,22 @@ public:
     using TextureUIElement::TextureUIElement;
     bool IsSelected;
     void Render(SDL_Renderer* aSDLRenderer);
+};
+
+
+class ButtonUIElement: public UIElement {
+private:
+    TTF_Font* mFont;
+    SDL_Texture* mTextTexture;
+    std::string mText;
+public:
+    ButtonUIElement(const float aLeft, const float aTop, const float aWidth, const float aHeight, TTF_Font* aFont, const std::string aText)
+        : UIElement(aLeft, aTop, aWidth, aHeight),
+          mFont {aFont},
+          mText {aText} {}
+    void Render(SDL_Renderer* aSDLRenderer);
+    TTF_Font* GetFont() const 
+    {
+        return mFont;
+    }
 };

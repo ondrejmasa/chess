@@ -449,6 +449,11 @@ int Renderer::GetScreenHeight() const
     return ScreenHeight;
 }
 
+TTF_Font *Renderer::GetFont() const
+{
+    return pFont;
+}
+
 const std::unordered_map<std::string, SDL_Texture *> &Renderer::GetMenuTextures() const
 {
     return MenuTextures;

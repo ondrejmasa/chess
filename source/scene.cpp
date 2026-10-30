@@ -5,12 +5,11 @@ std::optional<SceneRequest> MenuScene::Update()
     int w = mRenderer.GetScreenWidth();
     int h = mRenderer.GetScreenHeight();
     float sz = std::min(w, h)*0.3;
+
     mWhiteFigTexture->Update(w/2 - w/9 - sz, h / 10, sz, sz);
     mBlackFigTexture->Update(w/2 + w/9, h / 10, sz, sz);
+
     sz *= 0.5;
-    int ht = mSelRobotWhite->GetTexture()->h;
-    int wt = mSelRobotWhite->GetTexture()->w;
-    float wh_ratio = wt / (float)ht;
 
     mSelRobotWhite->Update(
         mWhiteFigTexture->Left - sz/5, 
@@ -34,7 +33,12 @@ std::optional<SceneRequest> MenuScene::Update()
         mBlackFigTexture->Left + mBlackFigTexture->Width - (sz-sz/5), 
         mBlackFigTexture->Top + mBlackFigTexture->Height,
         sz, sz);
-    mSelPersonBlack->IsSelected = false;    
+    mSelPersonBlack->IsSelected = false;   
+    
+    float btn_w = std::max(sz * 1.2f, 80.f);
+    float btn_h = sz * 0.2;
+    mStartButton->Update((w-btn_w) / 2.f, 3*h/4.f, btn_w, btn_h);
+
 
     return std::nullopt;
 }
@@ -55,12 +59,14 @@ void MenuScene::Initialize()
     mSelRobotBlack = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("robot"));
     mSelPersonWhite = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("person"));
     mSelPersonBlack = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("person"));
+    mStartButton = std::make_shared<ButtonUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetFont(), "START");
     mUIElements.push_back(mWhiteFigTexture);
     mUIElements.push_back(mBlackFigTexture);
     mUIElements.push_back(mSelRobotWhite);
     mUIElements.push_back(mSelRobotBlack);
     mUIElements.push_back(mSelPersonWhite);
     mUIElements.push_back(mSelPersonBlack);
+    mUIElements.push_back(mStartButton);
 }
 
 std::optional<SceneRequest> MenuScene::HandleEvent(const SDL_Event& aEvent)

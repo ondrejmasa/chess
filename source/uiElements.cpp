@@ -23,13 +23,14 @@ void UIElement::HandleEvent(const SDL_Event &aEvent)
 
 void SelectableUIElement::Render(SDL_Renderer *aSDLRenderer)
 {
+    SDL_SetRenderDrawBlendMode(aSDLRenderer, SDL_BLENDMODE_BLEND);
     float off_x = 0.05f*Width;
     float off_y = 0.05f*Height;
-    roundedBoxRGBA(aSDLRenderer, Left-off_x, Top-off_y, Left+Width+off_x, Top+Height+off_y, 25, 10, 15, 25, 255);
+    roundedBoxRGBA(aSDLRenderer, Left-off_x, Top-off_y, Left+Width+off_x, Top+Height+off_y, 15, 10, 15, 25, 150);
     TextureUIElement::Render(aSDLRenderer);
     if (IsSelected)
     {
-        roundedRectangleRGBA(aSDLRenderer, Left-off_x, Top-off_y, Left+Width+off_x, Top+Height+off_y, 25, 255, 0, 0, 255);
+        roundedRectangleRGBA(aSDLRenderer, Left-off_x, Top-off_y, Left+Width+off_x, Top+Height+off_y, 15, 255, 0, 0, 255);
     }
 }
 
@@ -37,4 +38,30 @@ void TextureUIElement::Render(SDL_Renderer *aSDLRenderer)
 {
     SDL_FRect r {Left, Top, Width, Height};
     SDL_RenderTexture(aSDLRenderer, mTexture, nullptr, &r);    
+}
+
+void ButtonUIElement::Render(SDL_Renderer *aSDLRenderer)
+{
+    TTF_SetFontSize(mFont, 30);
+    SDL_Color col {255, 255, 255, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Blended(mFont, mText.c_str(), 0, col);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(aSDLRenderer, textSurface);
+    SDL_DestroySurface(textSurface); 
+
+    float textWidth = 0.0f;
+    float textHeight = 0.0f;
+    SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
+    
+    int w = std::max(float(Width), 1.5f * textWidth);
+    int h = std::max(float(Height), 1.2f * textHeight);
+    roundedBoxRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 10, 10, 15, 25, 180); 
+    roundedRectangleRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 10, 0, 10, 30, 255);
+    
+    SDL_FRect renderQuad;
+    renderQuad.x = Left + (w - textWidth) / 2.f;
+    renderQuad.y = Top + (h - textHeight) / 2.f;
+    renderQuad.w = textWidth;
+    renderQuad.h = textHeight;
+    SDL_RenderTexture(aSDLRenderer, textTexture, nullptr, &renderQuad);
+    SDL_DestroyTexture(textTexture);       
 }

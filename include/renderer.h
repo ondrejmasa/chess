@@ -79,6 +79,7 @@ public:
 	PieceTypeAndColor GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const;
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
+	TTF_Font* GetFont() const;
 	const std::unordered_map<std::string, SDL_Texture*>& GetMenuTextures() const;
 	SDL_Texture* GetPieceTexture(const PieceTypeAndColor pc);
 	Renderer();
