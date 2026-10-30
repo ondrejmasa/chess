@@ -29,6 +29,11 @@ void Renderer::ClearAllTextures()
 
 	if (StalemateTexture != nullptr)
 		SDL_DestroyTexture(StalemateTexture);	
+
+	for (const auto& [key, texture] : MenuTextures) {
+        if (texture != nullptr)
+			SDL_DestroyTexture(texture);
+    }
 }
 
 void Renderer::InitTTF()
@@ -97,58 +102,81 @@ void Renderer::RenderPause()
 #include <SDL3_ttf/SDL_ttf.h>
 #include <iostream>
 
-void Renderer::RenderMenu()
+void Renderer::RenderMenu(const std::vector<std::shared_ptr<UIElement>>& aUIElements)
 {
 
 	// TEMPORARY
 
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
 
-    if (!pFont) {
-        // std::cerr << "Font není načten!" << std::endl;
-        return;
-    }
+    // if (!pFont) {
+    //     // std::cerr << "Font není načten!" << std::endl;
+    //     return;
+    // }
 
-    // Barva v SDL3 (RGBA float hodnoty 0.0f až 1.0f)
-    SDL_Color textColor = { 255, 255, 255, 255 }; 
+    // // Barva v SDL3 (RGBA float hodnoty 0.0f až 1.0f)
+    // SDL_Color textColor = { 255, 255, 255, 255 }; 
 
-    const char* menuText = "Left Click: Player vs Player | Right Click: Player vs Bot";
+    // const char* menuText = "Left Click: Player vs Player | Right Click: Player vs Bot";
 
-    // 1. Vytvoření Surface (délka 0 = null-terminated string)
-    SDL_Surface* textSurface = TTF_RenderText_Blended(pFont, menuText, 0, textColor);
-    if (!textSurface) {
-        std::cerr << "Chyba při vytváření surface: " << SDL_GetError() << std::endl;
-        return;
-    }
+    // // 1. Vytvoření Surface (délka 0 = null-terminated string)
+    // SDL_Surface* textSurface = TTF_RenderText_Blended(pFont, menuText, 0, textColor);
+    // if (!textSurface) {
+    //     std::cerr << "Chyba při vytváření surface: " << SDL_GetError() << std::endl;
+    //     return;
+    // }
 
-    // 2. Převod Surface na Texturu pro mRenderer (v SDL3 předáváte mRenderer a surface)
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(pSDLRenderer, textSurface);
+    // // 2. Převod Surface na Texturu pro mRenderer (v SDL3 předáváte mRenderer a surface)
+    // SDL_Texture* textTexture = SDL_CreateTextureFromSurface(pSDLRenderer, textSurface);
     
-    // Surface po převedení na texturu ihned uvolníme
-    SDL_DestroySurface(textSurface); // V SDL3 je to SDL_DestroySurface (místo SDL_FreeSurface)
+    // // Surface po převedení na texturu ihned uvolníme
+    // SDL_DestroySurface(textSurface); // V SDL3 je to SDL_DestroySurface (místo SDL_FreeSurface)
 
-    if (!textTexture) {
-        std::cerr << "Chyba při vytváření textury: " << SDL_GetError() << std::endl;
-        return;
-    }
+    // if (!textTexture) {
+    //     std::cerr << "Chyba při vytváření textury: " << SDL_GetError() << std::endl;
+    //     return;
+    // }
 
-    // 3. Zjištění rozměrů textury v SDL3
-    float textWidth = 0.0f;
-    float textHeight = 0.0f;
-    SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
+    // // 3. Zjištění rozměrů textury v SDL3
+    // float textWidth = 0.0f;
+    // float textHeight = 0.0f;
+    // SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
 
-    // 4. Nastavení pozice pomocí floatů (SDL_FRect)
-    SDL_FRect renderQuad;
-    renderQuad.x = (static_cast<float>(ScreenWidth) - textWidth) / 2.0f;
-    renderQuad.y = (static_cast<float>(ScreenHeight) - textHeight) / 2.0f;
-    renderQuad.w = textWidth;
-    renderQuad.h = textHeight;
+    // // 4. Nastavení pozice pomocí floatů (SDL_FRect)
+    // SDL_FRect renderQuad;
+    // renderQuad.x = (static_cast<float>(ScreenWidth) - textWidth) / 2.0f;
+    // renderQuad.y = (static_cast<float>(ScreenHeight) - textHeight) / 2.0f;
+    // renderQuad.w = textWidth;
+    // renderQuad.h = textHeight;
 
-    // 5. Vykreslení do SDL3 Rendereru
-    SDL_RenderTexture(pSDLRenderer, textTexture, nullptr, &renderQuad);
+    // // 5. Vykreslení do SDL3 Rendereru
+    // SDL_RenderTexture(pSDLRenderer, textTexture, nullptr, &renderQuad);
 
-    // 6. Úklid textury
-    SDL_DestroyTexture(textTexture);
+    // // 6. Úklid textury
+    // SDL_DestroyTexture(textTexture);
+
+
+	float w = (float)ScreenWidth; float h = (float)ScreenHeight;
+	SDL_Texture* bg = MenuTextures["bg"];
+	SDL_FRect r;
+	if (w/h <= bg->w/(float)bg->h)
+	{
+		float bg_w = h*bg->w/(float)bg->h;
+		r = {(w - bg_w) / 2, 0, bg_w, h};
+	}
+	else
+	{
+		float bg_h = w*bg->h/(float)bg->w;
+		r = {0, (h - bg_h) / 2, w, bg_h};
+	}
+	SDL_RenderTexture(pSDLRenderer, MenuTextures["bg"], nullptr, &r);
+
+
+	for (const auto el : aUIElements)
+	{
+		el->Render(pSDLRenderer);
+	}
+
 }
 
 void Renderer::RenderBoard(const Board &board)
@@ -332,6 +360,10 @@ void Renderer::loadAllTextures()
 	WinTextures[0] = LoadTexture("resources/win_black.png", pSDLRenderer);
 	WinTextures[1] = LoadTexture("resources/win_white.png", pSDLRenderer);
 	StalemateTexture = LoadTexture("resources/stalemate.png", pSDLRenderer);
+
+	MenuTextures["robot"] = LoadTexture("resources/robot_icon.png", pSDLRenderer);
+	MenuTextures["person"] = LoadTexture("resources/person_icon.png", pSDLRenderer);
+	MenuTextures["bg"] = LoadTexture("resources/menu_background.jpeg", pSDLRenderer);
 }
 
 void Renderer::UpdateFPS()
@@ -356,6 +388,8 @@ void Renderer::ChangeScreenSize(const int width, const int height)
 	ScreenWidth = width;
 	ScreenHeight = height;
 	BoardSize = std::min(ScreenWidth - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, ScreenHeight - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
+	BoardX = (ScreenWidth - BoardSize) / 2.f;
+	BoardY = (ScreenHeight - BoardSize) / 2.f;
 }
 
 int8_t Renderer::GetIdxAtPosition(const float posX, const float posY) const
@@ -403,6 +437,26 @@ PieceTypeAndColor Renderer::GetPromotePieceAtPosition(const bool isWhite, const 
 		}		
 	}	
 	return NONE;
+}
+
+int Renderer::GetScreenWidth() const
+{
+    return ScreenWidth;
+}
+
+int Renderer::GetScreenHeight() const
+{
+    return ScreenHeight;
+}
+
+const std::unordered_map<std::string, SDL_Texture *> &Renderer::GetMenuTextures() const
+{
+    return MenuTextures;
+}
+
+SDL_Texture *Renderer::GetPieceTexture(const PieceTypeAndColor pc)
+{
+    return PieceTextures[pc];
 }
 
 Renderer::Renderer()

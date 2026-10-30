@@ -1238,6 +1238,7 @@ int Board::GetEvalSiglePc(PieceTypeAndColor pc) const
 		case NONE:
 			return 0;
 	}
+	return 0;
 }
 
 bool Board::CheckMoveRepetition() const

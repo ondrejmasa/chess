@@ -4,11 +4,13 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <string>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <cmath>
+#include <memory>
 #include "global.h"
 #include "board.h"
 #include "fpsCounter.h"
+#include "uiElements.h"
 
 struct BoardSettings
 {
@@ -17,7 +19,6 @@ struct BoardSettings
 	float OffsetRight = 15.f;
 	float OffsetBottom = 15.f;
 };
-
 
 class Animator {
 private:
@@ -49,6 +50,7 @@ private:
 	float BoardSize = std::min(ScreenWidth - mBoardSettings.OffsetLeft - mBoardSettings.OffsetRight, ScreenHeight - mBoardSettings.OffsetTop - mBoardSettings.OffsetBottom);
 	std::array<SDL_Texture*, 12> PieceTextures;
 	std::array<SDL_Texture*, 2> WinTextures;
+	std::unordered_map<std::string, SDL_Texture*> MenuTextures;
 	SDL_Texture* StalemateTexture;
 	SDL_FRect PromoteRect;
 	MoveData LastMove;
@@ -68,13 +70,17 @@ public:
 	void RenderClear();
 	void RenderPresent();
 	void RenderPause();
-	void RenderMenu();
+	void RenderMenu(const std::vector<std::shared_ptr<UIElement>>& aUIElements);
 	void loadAllTextures();
 	void UpdateFPS();
 	void Restart();
 	void ChangeScreenSize(const int width, const int height);
 	int8_t GetIdxAtPosition(const float posX, const float posY) const;
 	PieceTypeAndColor GetPromotePieceAtPosition(const bool isWhite, const float posX, const float posY) const;
+	int GetScreenWidth() const;
+	int GetScreenHeight() const;
+	const std::unordered_map<std::string, SDL_Texture*>& GetMenuTextures() const;
+	SDL_Texture* GetPieceTexture(const PieceTypeAndColor pc);
 	Renderer();
 	~Renderer();
 };

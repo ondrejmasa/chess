@@ -16,6 +16,9 @@ project ("chess" CXX)
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 find_package(SDL3_ttf REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(SDL3_GFX REQUIRED IMPORTED_TARGET sdl3-gfx)
 
 # 2. Definice tvého spustitelného programu
 add_executable (chess 
@@ -27,13 +30,16 @@ add_executable (chess
     "source/board.cpp" "include/board.h"
     "include/minimax.h" "source/minimax.cpp"
     "source/player.cpp" "include/player.h"
-    source/sceneManager.cpp)
+    "source/sceneManager.cpp"
+    "source/uiElements.cpp"
+    "include/scene.h" "source/scene.cpp")
 
 # 3. Prolinkování knihoven (vcpkg používá moderní jmenné prostory s dvojtečkou)
 target_link_libraries(chess PRIVATE 
     SDL3::SDL3
     SDL3_image::SDL3_image
     SDL3_ttf::SDL3_ttf
+    PkgConfig::SDL3_GFX
 )
 
 # 4. Include adresář pro tvé vlastní hlavičkové soubory
