@@ -45,6 +45,18 @@ MinimaxMove User::GenerateMove(Board &board)
     return result;
 }
 
+Computer::~Computer()
+{
+    if (IsComputing)
+    {
+        StopComputing.store(true);
+        if (MoveFuture.valid())
+        {
+            MoveFuture.wait();
+        }
+    }
+}
+
 MinimaxMove Computer::GenerateMove(Board &board)
 {
     if (IsComputing)
@@ -60,8 +72,22 @@ MinimaxMove Computer::GenerateMove(Board &board)
         }
     }
 
+    StopComputing.store(false);
     IsComputing = true;
     ThreadBoard = board;
-    MoveFuture = std::async(std::launch::async, GetBestMove, std::ref(ThreadBoard), Depth, IsWhite);
+    MoveFuture = std::async(std::launch::async, GetBestMove, std::ref(ThreadBoard), Depth, IsWhite, std::cref(StopComputing));
     return {-1, -1, -1, NONE};
+}
+
+void Computer::Stop()
+{
+    if (IsComputing)
+    {
+        StopComputing.store(true);
+        if (MoveFuture.valid())
+        {
+            MoveFuture.wait(); 
+        }
+        IsComputing = false;
+    }    
 }

@@ -1161,6 +1161,7 @@ void Board::Restart()
     WhiteCastle.Restart();
     BlackCastle.Restart();
 	LastMove.Restart();
+	BoardHistory.clear();
 	InitBoard();
 }
 

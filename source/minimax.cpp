@@ -1,6 +1,6 @@
 #include "minimax.h"
 
-int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite, int alpha, int beta)
+int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite, int alpha, int beta, const std::atomic<bool>& stopFlag)
  {
     if (gamestate == W_WIN)
         return 9999999 + depth;
@@ -22,6 +22,10 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
 
     for (const MoveData& m : moves)
     {
+        if (stopFlag.load()) 
+        {
+            return 0;
+        }
         int val;
         board.Move(m.From, m.To);
         GameState gs = board.UpdateAfterMove();  
@@ -34,7 +38,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta, stopFlag);   
                 bestVal = std::max(bestVal, val); 
                 board.UndoMove();
                 alpha = std::max(alpha, val);
@@ -56,7 +60,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta, stopFlag);   
                 bestVal = std::min(bestVal, val); 
                 board.UndoMove();
                 beta = std::min(beta, val);
@@ -70,7 +74,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
         }   
         else 
         {
-            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta);   
+            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta, stopFlag);   
             board.UndoMove();
             if (isWhite)
             {
@@ -91,7 +95,7 @@ int Minimax(Board &board, const GameState gamestate, const int depth, const bool
 }
 
 
-MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
+MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite, const std::atomic<bool>& stopFlag)
 {
     std::vector<MoveData> moves = board.GetAllMovesFromTo(isWhite);    
     MinimaxMove move;
@@ -115,6 +119,10 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
 
     for (const MoveData& m : moves)
     {
+        if (stopFlag.load()) 
+        {
+            return {-1, -1, -1, NONE};
+        }
         int val;
         board.Move(m.From, m.To);
         GameState gs = board.UpdateAfterMove();  
@@ -127,7 +135,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta, stopFlag);   
                 board.UndoMove();
                 if (val > bestVal)
                 {
@@ -149,7 +157,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
                 board.Move(m.From, m.To);
                 // board.UpdateAfterMove(); 
                 board.PromotePawn((PieceTypeAndColor)pc);
-                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta);   
+                val = Minimax(board, GAME, depth-1, not isWhite, alpha, beta, stopFlag);   
                 board.UndoMove();
                 if (val < bestVal)
                 {
@@ -164,7 +172,7 @@ MinimaxMove GetBestMove(Board &board, const int depth, const bool isWhite)
         }   
         else 
         {
-            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta);   
+            val = Minimax(board, gs, depth-1, not isWhite, alpha, beta, stopFlag);   
             board.UndoMove();
             if (isWhite)
             {

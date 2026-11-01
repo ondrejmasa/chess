@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_gfx/SDL3_gfxPrimitives.h>
 #include <string>
 #include <iostream>
 #include <unordered_map>
@@ -70,7 +71,8 @@ public:
 	void RenderClear();
 	void RenderPresent();
 	void RenderPause();
-	void RenderMenu(const std::vector<std::shared_ptr<UIElement>>& aUIElements);
+	void RenderMenu();
+	void RenderUI(const std::vector<std::shared_ptr<UIElement>>& aUIElements);
 	void loadAllTextures();
 	void UpdateFPS();
 	void Restart();

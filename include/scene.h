@@ -31,6 +31,14 @@ public:
     virtual void Initialize() {};
 };
 
+class UIScene: public Scene {
+protected:
+    using Scene::Scene;
+    std::vector<std::shared_ptr<UIElement>> mUIElements;
+    std::optional<SceneRequest> HandleEvent(const SDL_Event& aEvent);
+    void Render();
+};
+
 class GameScene: public Scene {
 private:
 	Board mBoard;
@@ -38,16 +46,16 @@ private:
     std::array<std::unique_ptr<Player>, 2> mPlayers;
 	bool mIsWhiteTurn = true;
 	void HandleLeftClick(const SDL_Event& event);
-    void Restart();
 public:
     using Scene::Scene;
     void StartNewGame(std::unique_ptr<Player> aWhite, std::unique_ptr<Player> aBlack);
     std::optional<SceneRequest> Update();
     std::optional<SceneRequest> HandleEvent(const SDL_Event& aEvent);  
     void Render();
+    void Restart();
 };
 
-class MenuScene: public Scene {
+class MenuScene: public UIScene {
 private:
     std::shared_ptr<SelectableUIElement> mSelRobotWhite;
     std::shared_ptr<SelectableUIElement> mSelRobotBlack;
@@ -56,20 +64,28 @@ private:
     std::shared_ptr<TextureUIElement> mWhiteFigTexture;
     std::shared_ptr<TextureUIElement> mBlackFigTexture;
     std::shared_ptr<ButtonUIElement> mStartButton;
-    std::vector<std::shared_ptr<UIElement>> mUIElements;
+    bool mIsWhiteRobot = false;
+    bool mIsBlackRobot = true;
+    bool mIsNextClicked = false;
 public:
-    using Scene::Scene;
+    using UIScene::UIScene;
     std::optional<SceneRequest> Update();
-    std::optional<SceneRequest> HandleEvent(const SDL_Event& aEvent);   
     void Render();
     void Initialize();
 };
 
-class PauseScene: public Scene {
+class PauseScene: public UIScene {
+private:
+    std::shared_ptr<ButtonUIElement> mRestartButton;
+    std::shared_ptr<ButtonUIElement> mMenuButton;    
+    bool mIsRestartClicked;
+    bool mIsMenuClicked;
 public:
-    using Scene::Scene;  
-    std::optional<SceneRequest> HandleEvent(const SDL_Event& aEvent);   
+    using UIScene::UIScene;  
+    std::optional<SceneRequest> HandleEvent(const SDL_Event& aEvent);  
+    std::optional<SceneRequest> Update(); 
     void Render();    
+    void Initialize();
 };
 
 class SceneChangeCommand {
@@ -88,4 +104,9 @@ public:
         mBlack = std::move(aBlack); 
     };
     void execute(std::shared_ptr<Scene> aScene);    
+};
+
+class SceneChangeRestartGameCommand: public SceneChangeCommand {
+public:
+    void execute(std::shared_ptr<Scene> aScene);  
 };

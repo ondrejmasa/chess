@@ -2,9 +2,11 @@
 
 std::optional<SceneRequest> MenuScene::Update()
 {
+    std::optional<SceneRequest> next = std::nullopt;
+
     int w = mRenderer.GetScreenWidth();
     int h = mRenderer.GetScreenHeight();
-    float sz = std::min(w, h)*0.3;
+    float sz = std::min(w, h)*0.3f;
 
     mWhiteFigTexture->Update(w/2 - w/9 - sz, h / 10, sz, sz);
     mBlackFigTexture->Update(w/2 + w/9, h / 10, sz, sz);
@@ -15,37 +17,51 @@ std::optional<SceneRequest> MenuScene::Update()
         mWhiteFigTexture->Left - sz/5, 
         mWhiteFigTexture->Top + mWhiteFigTexture->Height,
         sz, sz);
-    mSelRobotWhite->IsSelected = false;  
+    mSelRobotWhite->IsSelected = mIsWhiteRobot;  
 
     mSelPersonWhite->Update(
         mWhiteFigTexture->Left + mWhiteFigTexture->Width - (sz-sz/5), 
         mWhiteFigTexture->Top + mWhiteFigTexture->Height,
         sz, sz);
-    mSelPersonWhite->IsSelected = true; 
+    mSelPersonWhite->IsSelected = not mIsWhiteRobot; 
 
     mSelRobotBlack->Update(
         mBlackFigTexture->Left - sz/5, 
         mBlackFigTexture->Top + mBlackFigTexture->Height,
         sz, sz);
-    mSelRobotBlack->IsSelected = true;
+    mSelRobotBlack->IsSelected = mIsBlackRobot;
 
     mSelPersonBlack->Update(
         mBlackFigTexture->Left + mBlackFigTexture->Width - (sz-sz/5), 
         mBlackFigTexture->Top + mBlackFigTexture->Height,
         sz, sz);
-    mSelPersonBlack->IsSelected = false;   
+    mSelPersonBlack->IsSelected = not mIsBlackRobot;   
     
     float btn_w = std::max(sz * 1.2f, 80.f);
-    float btn_h = sz * 0.2;
+    float btn_h = std::max(sz * 0.3f, 20.f);
     mStartButton->Update((w-btn_w) / 2.f, 3*h/4.f, btn_w, btn_h);
 
-
-    return std::nullopt;
+    if (mIsNextClicked)
+    {
+        std::unique_ptr<Player> black, white;
+        if (mIsBlackRobot)
+            black = std::make_unique<Computer>(mRenderer, false);
+        else
+            black = std::make_unique<User>(mRenderer, false);
+        if (mIsWhiteRobot)
+            white = std::make_unique<Computer>(mRenderer, true);
+        else
+            white = std::make_unique<User>(mRenderer, true);
+        auto cmd = std::make_shared<SceneChangeNewGameCommand>(std::move(white), std::move(black));
+        next = {SceneOperation::CHANGE, SceneType::GAME, cmd};
+    }
+    return next;
 }
 
 void MenuScene::Render()
 {
-    mRenderer.RenderMenu(mUIElements);
+    mRenderer.RenderMenu();
+    UIScene::Render();
 }
 
 void MenuScene::Initialize()
@@ -56,10 +72,15 @@ void MenuScene::Initialize()
     mWhiteFigTexture = std::make_shared<TextureUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetPieceTexture(W_QUEEN));
     mBlackFigTexture = std::make_shared<TextureUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetPieceTexture(B_QUEEN));
     mSelRobotWhite = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("robot"));
+    mSelRobotWhite->OnClick = [this]() {mIsWhiteRobot = true;};
     mSelRobotBlack = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("robot"));
+    mSelRobotBlack->OnClick = [this]() {mIsBlackRobot = true;};
     mSelPersonWhite = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("person"));
+    mSelPersonWhite->OnClick = [this]() {mIsWhiteRobot = false;};
     mSelPersonBlack = std::make_shared<SelectableUIElement>(0.f, 0.f, 0.f, 0.f, menuTextures.at("person"));
+    mSelPersonBlack->OnClick = [this]() {mIsBlackRobot = false;};
     mStartButton = std::make_shared<ButtonUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetFont(), "START");
+    mStartButton->OnClick = [this]() {mIsNextClicked = true;};
     mUIElements.push_back(mWhiteFigTexture);
     mUIElements.push_back(mBlackFigTexture);
     mUIElements.push_back(mSelRobotWhite);
@@ -67,29 +88,6 @@ void MenuScene::Initialize()
     mUIElements.push_back(mSelPersonWhite);
     mUIElements.push_back(mSelPersonBlack);
     mUIElements.push_back(mStartButton);
-}
-
-std::optional<SceneRequest> MenuScene::HandleEvent(const SDL_Event& aEvent)
-{
-    std::optional<SceneRequest> next = std::nullopt;
-    if (aEvent.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-    {
-        if (aEvent.button.button == SDL_BUTTON_LEFT)
-        {
-            auto black = std::make_unique<User>(mRenderer, false);
-		    auto white = std::make_unique<User>(mRenderer, true);
-            auto cmd = std::make_shared<SceneChangeNewGameCommand>(std::move(white), std::move(black));
-            next = {SceneOperation::CHANGE, SceneType::GAME, cmd};
-        }
-        else if (aEvent.button.button == SDL_BUTTON_RIGHT)
-        {
-            auto black = std::make_unique<Computer>(mRenderer, false);
-		    auto white = std::make_unique<User>(mRenderer, true);
-            auto cmd = std::make_shared<SceneChangeNewGameCommand>(std::move(white), std::move(black));
-            next = {SceneOperation::CHANGE, SceneType::GAME, cmd};
-        }
-    }
-    return next;
 }
 
 void GameScene::HandleLeftClick(const SDL_Event &event)
@@ -118,6 +116,13 @@ void GameScene::HandleLeftClick(const SDL_Event &event)
 
 void GameScene::Restart()
 {
+    for (auto& player : mPlayers)
+    {
+        if (player)
+        {
+            player->Stop();
+        }
+    }
     mGameState = GameState::GAME;
 	mIsWhiteTurn = true;
 	mRenderer.Restart();
@@ -201,6 +206,7 @@ std::shared_ptr<Scene> Scene::CreateBySceneType(const SceneType aType, Renderer&
 std::optional<SceneRequest> PauseScene::HandleEvent(const SDL_Event &aEvent)
 {
     std::optional<SceneRequest> next = std::nullopt;
+    next = UIScene::HandleEvent(aEvent);
     if (aEvent.type == SDL_EVENT_KEY_DOWN)
     {
         if (aEvent.key.key == SDLK_ESCAPE)
@@ -211,9 +217,49 @@ std::optional<SceneRequest> PauseScene::HandleEvent(const SDL_Event &aEvent)
     return next;
 }
 
+std::optional<SceneRequest> PauseScene::Update()
+{
+    std::optional<SceneRequest> next = std::nullopt;
+    int w = mRenderer.GetScreenWidth();
+    int h = mRenderer.GetScreenHeight();
+    float sz = std::min(w, h)*0.2f;
+    float btn_w = std::max(sz * 1.3f, 85.f);
+    float btn_h = std::max(sz * 0.2f, 15.f);
+    float gap = btn_h;
+    int n = mUIElements.size();
+    for (auto i = 0; i < n; i++)
+    {
+        mUIElements[i]->Update((w-btn_w)/2.f, (h-btn_h)/2.f - (n/2 - i)*(btn_h+gap), btn_w, btn_h);    
+    };
+
+    if (mIsRestartClicked)
+    {
+        auto cmd = std::make_shared<SceneChangeRestartGameCommand>();
+        next = {SceneOperation::POP, SceneType::NONE, cmd};
+    }
+
+    if (mIsMenuClicked)
+    {
+        next = {SceneOperation::CHANGE, SceneType::MENU, nullptr};
+    }
+
+    return next;
+}
+
 void PauseScene::Render()
 {
     mRenderer.RenderPause();
+    UIScene::Render();
+}
+
+void PauseScene::Initialize()
+{
+    mRestartButton = std::make_shared<ButtonUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetFont(), "Restart");
+    mRestartButton->OnClick = [this]() {mIsRestartClicked = true;};
+    mMenuButton = std::make_shared<ButtonUIElement>(0.f, 0.f, 0.f, 0.f, mRenderer.GetFont(), "Back to menu");
+    mMenuButton->OnClick = [this]() {mIsMenuClicked = true;};
+    mUIElements.push_back(mRestartButton);
+    mUIElements.push_back(mMenuButton);
 }
 
 void SceneChangeNewGameCommand::execute(std::shared_ptr<Scene> aScene)
@@ -222,5 +268,26 @@ void SceneChangeNewGameCommand::execute(std::shared_ptr<Scene> aScene)
     if (gameScene)
     {
         gameScene ->StartNewGame(std::move(mWhite), std::move(mBlack));
+    }
+}
+
+std::optional<SceneRequest> UIScene::HandleEvent(const SDL_Event &aEvent)
+{
+    for (auto elem : mUIElements)
+        elem->HandleEvent(aEvent);
+    return std::nullopt;
+}
+
+void UIScene::Render()
+{
+    mRenderer.RenderUI(mUIElements);
+}
+
+void SceneChangeRestartGameCommand::execute(std::shared_ptr<Scene> aScene)
+{
+    auto gameScene = std::dynamic_pointer_cast<GameScene>(aScene);
+    if (gameScene)
+    {
+        gameScene ->Restart();
     }
 }

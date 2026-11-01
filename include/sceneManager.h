@@ -20,6 +20,7 @@ public:
         : mRenderer {aRenderer} {};
     void ChangeScene(const SceneType aType, std::shared_ptr<SceneChangeCommand> aCommand);
     void PushScene(const SceneType aType, std::shared_ptr<SceneChangeCommand> aCommand);
+    void PopScene(std::shared_ptr<SceneChangeCommand> aCommand);
     void Update();
     void Render();
     void HandleEvent(const SDL_Event& aEvent);

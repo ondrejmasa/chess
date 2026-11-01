@@ -102,59 +102,9 @@ void Renderer::RenderPause()
 #include <SDL3_ttf/SDL_ttf.h>
 #include <iostream>
 
-void Renderer::RenderMenu(const std::vector<std::shared_ptr<UIElement>>& aUIElements)
+void Renderer::RenderMenu()
 {
-
-	// TEMPORARY
-
 	SDL_SetRenderDrawBlendMode(pSDLRenderer, SDL_BLENDMODE_BLEND);
-
-    // if (!pFont) {
-    //     // std::cerr << "Font není načten!" << std::endl;
-    //     return;
-    // }
-
-    // // Barva v SDL3 (RGBA float hodnoty 0.0f až 1.0f)
-    // SDL_Color textColor = { 255, 255, 255, 255 }; 
-
-    // const char* menuText = "Left Click: Player vs Player | Right Click: Player vs Bot";
-
-    // // 1. Vytvoření Surface (délka 0 = null-terminated string)
-    // SDL_Surface* textSurface = TTF_RenderText_Blended(pFont, menuText, 0, textColor);
-    // if (!textSurface) {
-    //     std::cerr << "Chyba při vytváření surface: " << SDL_GetError() << std::endl;
-    //     return;
-    // }
-
-    // // 2. Převod Surface na Texturu pro mRenderer (v SDL3 předáváte mRenderer a surface)
-    // SDL_Texture* textTexture = SDL_CreateTextureFromSurface(pSDLRenderer, textSurface);
-    
-    // // Surface po převedení na texturu ihned uvolníme
-    // SDL_DestroySurface(textSurface); // V SDL3 je to SDL_DestroySurface (místo SDL_FreeSurface)
-
-    // if (!textTexture) {
-    //     std::cerr << "Chyba při vytváření textury: " << SDL_GetError() << std::endl;
-    //     return;
-    // }
-
-    // // 3. Zjištění rozměrů textury v SDL3
-    // float textWidth = 0.0f;
-    // float textHeight = 0.0f;
-    // SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
-
-    // // 4. Nastavení pozice pomocí floatů (SDL_FRect)
-    // SDL_FRect renderQuad;
-    // renderQuad.x = (static_cast<float>(ScreenWidth) - textWidth) / 2.0f;
-    // renderQuad.y = (static_cast<float>(ScreenHeight) - textHeight) / 2.0f;
-    // renderQuad.w = textWidth;
-    // renderQuad.h = textHeight;
-
-    // // 5. Vykreslení do SDL3 Rendereru
-    // SDL_RenderTexture(pSDLRenderer, textTexture, nullptr, &renderQuad);
-
-    // // 6. Úklid textury
-    // SDL_DestroyTexture(textTexture);
-
 
 	float w = (float)ScreenWidth; float h = (float)ScreenHeight;
 	SDL_Texture* bg = MenuTextures["bg"];
@@ -170,13 +120,6 @@ void Renderer::RenderMenu(const std::vector<std::shared_ptr<UIElement>>& aUIElem
 		r = {0, (h - bg_h) / 2, w, bg_h};
 	}
 	SDL_RenderTexture(pSDLRenderer, MenuTextures["bg"], nullptr, &r);
-
-
-	for (const auto el : aUIElements)
-	{
-		el->Render(pSDLRenderer);
-	}
-
 }
 
 void Renderer::RenderBoard(const Board &board)
@@ -204,11 +147,11 @@ void Renderer::RenderBoard(const Board &board)
 
 	// background
 	SDL_FRect rect = { BoardX, BoardY, BoardSize, BoardSize };
-	SDL_SetRenderDrawColor(pSDLRenderer, 242, 232, 231, 255);
+	SDL_SetRenderDrawColor(pSDLRenderer, 60, 60, 82, 255);
 	SDL_RenderFillRect(pSDLRenderer, &rect);
 
 	// dark squares
-	SDL_SetRenderDrawColor(pSDLRenderer, 163, 82, 78, 255);
+	SDL_SetRenderDrawColor(pSDLRenderer, 42, 40, 60, 255);
 	for (auto i = 0; i < 8; ++i) {
 		auto i_rot = std::abs(ro-i);
 		for (auto j = 1 - (i % 2); j < 8; j += 2) {
@@ -229,7 +172,7 @@ void Renderer::RenderBoard(const Board &board)
 				float sz = cellSize * 0.90f;
 				float o = (cellSize - sz) / 2;
 				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
-				SDL_SetRenderDrawColor(pSDLRenderer, 255, 237, 189, 255);
+				SDL_SetRenderDrawColor(pSDLRenderer, 160, 150, 85, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
 			else if (LastMove.To == idx)
@@ -237,7 +180,7 @@ void Renderer::RenderBoard(const Board &board)
 				float sz = cellSize * 0.90f;
 				float o = (cellSize - sz) / 2;
 				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
-				SDL_SetRenderDrawColor(pSDLRenderer, 255, 203, 166, 255);
+				SDL_SetRenderDrawColor(pSDLRenderer, 190, 180, 95, 255);
 				SDL_RenderFillRect(pSDLRenderer, &rect);
 			}
 
@@ -247,8 +190,11 @@ void Renderer::RenderBoard(const Board &board)
 				float sz = cellSize * 0.75f;
 				float o = (cellSize - sz) / 2;
 				rect = { BoardX + j_rot * cellSize + o, BoardY + (7 - i_rot) * cellSize + o, sz, sz };
-				SDL_SetRenderDrawColor(pSDLRenderer, 150, 150, 150, 100);
-				SDL_RenderFillRect(pSDLRenderer, &rect);
+				// SDL_SetRenderDrawColor(pSDLRenderer, 150, 150, 150, 100);
+				// SDL_RenderFillRect(pSDLRenderer, &rect);
+				float rad = (board.OccupiedBB >> idx) & 1ULL ? sz/2.f : sz/4.f;
+				filledCircleRGBA(pSDLRenderer, rect.x + sz/2.f, rect.y + sz/2.f, rad, 150, 150, 150, 150);
+				aacircleRGBA(pSDLRenderer, rect.x + sz/2.f, rect.y + sz/2.f, rad, 150, 150, 150, 255);
 			}
 			// pieces
 			for (int pc = W_PAWN; pc <= B_KING; ++pc)
@@ -339,6 +285,14 @@ void Renderer::RenderGameEnd(const GameState gameState)
 	r.x = BoardX + (BoardSize-r.w) / 2.f;
 	r.y = BoardY + (BoardSize-r.h) / 2.f;
 	SDL_RenderTexture(pSDLRenderer, t, nullptr, &r);
+}
+
+void Renderer::RenderUI(const std::vector<std::shared_ptr<UIElement>> &aUIElements)
+{
+	for (const auto el : aUIElements)
+	{
+		el->Render(pSDLRenderer);
+	}
 }
 
 void Renderer::loadAllTextures()

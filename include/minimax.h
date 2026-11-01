@@ -2,6 +2,7 @@
 #include "board.h"
 #include <climits>
 #include <algorithm>
+#include <atomic>
 
 struct MinimaxMove {
     int8_t From;
@@ -10,8 +11,8 @@ struct MinimaxMove {
     PieceTypeAndColor PromotePc;  
 };
 
-int Minimax(Board& board, const GameState gamestate, const uint8_t depth, const bool isWhite);
+int Minimax(Board &board, const GameState gamestate, const int depth, const bool isWhite, int alpha, int beta, const std::atomic<bool>& stopFlag);
 
-MinimaxMove GetBestMove(Board& board, const int depth, const bool isWhite);
+MinimaxMove GetBestMove(Board& board, const int depth, const bool isWhite, const std::atomic<bool>& stopFlag);
 
 

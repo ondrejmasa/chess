@@ -2,7 +2,7 @@
 
 void UIElement::HandleEvent(const SDL_Event &aEvent)
 {
-    if (aEvent.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    if (aEvent.type == SDL_EVENT_MOUSE_BUTTON_UP)
     {
         if (aEvent.button.button == SDL_BUTTON_LEFT)
         {
@@ -42,7 +42,7 @@ void TextureUIElement::Render(SDL_Renderer *aSDLRenderer)
 
 void ButtonUIElement::Render(SDL_Renderer *aSDLRenderer)
 {
-    TTF_SetFontSize(mFont, 30);
+    TTF_SetFontSize(mFont, Height);
     SDL_Color col {255, 255, 255, 255};
     SDL_Surface* textSurface = TTF_RenderText_Blended(mFont, mText.c_str(), 0, col);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(aSDLRenderer, textSurface);
@@ -52,10 +52,10 @@ void ButtonUIElement::Render(SDL_Renderer *aSDLRenderer)
     float textHeight = 0.0f;
     SDL_GetTextureSize(textTexture, &textWidth, &textHeight);
     
-    int w = std::max(float(Width), 1.5f * textWidth);
-    int h = std::max(float(Height), 1.2f * textHeight);
-    roundedBoxRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 10, 10, 15, 25, 180); 
-    roundedRectangleRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 10, 0, 10, 30, 255);
+    int w = Width;
+    int h = Height;
+    roundedBoxRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 5, 10, 15, 25, 180); 
+    roundedRectangleRGBA(aSDLRenderer, Left, Top, Left+w, Top+h, 5, 0, 10, 30, 255);
     
     SDL_FRect renderQuad;
     renderQuad.x = Left + (w - textWidth) / 2.f;

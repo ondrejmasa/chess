@@ -20,6 +20,13 @@ void SceneManager::PushScene(const SceneType aType, std::shared_ptr<SceneChangeC
     mScenes.push_back(scene);
 }
 
+void SceneManager::PopScene(std::shared_ptr<SceneChangeCommand> aCommand)
+{
+    mScenes.pop_back();
+    if (aCommand)
+        aCommand->execute(mScenes.back());
+}
+
 void SceneManager::Update()
 {
     mRenderer.UpdateFPS();
@@ -34,12 +41,14 @@ void SceneManager::Update()
             ChangeScene(mNextSceneRequest->mNewScene, mNextSceneRequest->mSceneCommand);
             break;  
         case SceneOperation::POP:
-            mScenes.pop_back();
+            PopScene(mNextSceneRequest->mSceneCommand);
             break;
         case SceneOperation::PUSH:
             PushScene(mNextSceneRequest->mNewScene, mNextSceneRequest->mSceneCommand);
+            break;
         }
         mNextSceneRequest.reset();
+        SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
     }
 }
 
